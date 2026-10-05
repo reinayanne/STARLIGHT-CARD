@@ -1,10 +1,14 @@
 
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Starlight Monitor | Client Database v2</title>
+<link rel="icon" type="image/png" sizes="64x64" href="adminfavicon.ico">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -150,6 +154,19 @@ tr.row-done td.keepcell .numcell,tr.row-done td.keepcell input{color:var(--pink)
 .searchbox i{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--pink);font-size:13px}
 .hbtns button.sync-on{background:var(--success);border-color:rgba(255,255,255,.6)}
 
+/* ===== MONTH HEADER ROWS ===== */
+tr.month-head td{background:linear-gradient(135deg,var(--pink-dark),var(--pink)) !important;padding:7px 14px;position:sticky;top:34px;z-index:8}
+.mh-inner{display:flex;align-items:center;gap:10px;color:#fff;flex-wrap:wrap}
+.mh-toggle{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);color:#fff;width:28px;height:28px;border-radius:9px;cursor:pointer;flex:none;transition:.2s}
+.mh-toggle:hover{background:#fff;color:var(--pink)}
+.mh-name{font-size:15px;font-weight:900;letter-spacing:1.5px;cursor:pointer;text-transform:uppercase}
+.mh-name:hover{text-decoration:underline}
+.mh-info{font-size:11px;opacity:.85;font-weight:600}
+.mh-actions{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+.mh-actions button{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:9px;padding:5px 11px;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:5px;transition:.2s;white-space:nowrap}
+.mh-actions button:hover{background:#fff;color:var(--pink)}
+.mh-actions .mh-danger:hover{background:#fff;color:var(--danger)}
+
 /* ===== MOBILE / SMALL DEVICES ===== */
 @media(max-width:768px){
   body{padding-bottom:40px}
@@ -203,10 +220,12 @@ tr.row-done td.keepcell .numcell,tr.row-done td.keepcell input{color:var(--pink)
 <base target="_blank">
 <base target="_blank">
 <base target="_blank">
+<base target="_blank">
+<base target="_blank">
 </head>
 <body>
 <header>
-  <h1><i class="fas fa-star"></i> Starlight Monitor <span class="sub">— Client Database & Gifting Tracker v2</span></h1>
+  <h1><img src="adminlogo.png" alt="DGC" style="height:38px;width:auto;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,0.25);" onerror="this.style.display='none'"> <i class="fas fa-star"></i> Starlight Monitor <span class="sub">— Client Database & Gifting Tracker v2 · Firebase Live Sync ☁️</span></h1>
   <div class="hbtns">
     <button class="txtbtn" onclick="addRow()" title="Add row"><i class="fas fa-plus"></i> Add Row</button>
     <button class="txtbtn" onclick="exportExcel()" title="Export to Excel"><i class="fas fa-file-excel"></i> Excel</button>
@@ -330,13 +349,11 @@ let state = load() || defaultState();
    4. I-paste ang values sa FIREBASE_CONFIG sa baba.
    Kung walang config (PASTE_... pa rin), localStorage fallback lang = same behavior as before. */
 const FIREBASE_CONFIG = {
-  apiKey: "PASTE_API_KEY",
-  authDomain: "PASTE_PROJECT_ID.firebaseapp.com",
-  databaseURL: "https://PASTE_PROJECT_ID-default-rtdb.firebaseio.com",
-  projectId: "PASTE_PROJECT_ID",
-  storageBucket: "PASTE_PROJECT_ID.appspot.com",
-  messagingSenderId: "PASTE_SENDER_ID",
-  appId: "PASTE_APP_ID"
+  apiKey: "AIzaSyAeN8HFUvdfCH4U7veGjo-a9-Pqv6Nd008",
+  authDomain: "dgc-estore.firebaseapp.com",
+  databaseURL: "https://dgc-estore-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "dgc-estore",
+  storageBucket: "dgc-estore.firebasestorage.app"
 };
 const FB_PATH='starlight_monitor_v2/state';
 let fbDB=null,fbTimer=null;
@@ -377,6 +394,13 @@ function fbStart(){
   });
 }
 
+/* ================= MONTHS =================
+   state.months = [ {name:'SEPTEMBER', collapsed:false, rows:[...]}, ... ]
+   Accounts/strip/calendar/fill = ACTIVE month (last). Chips/income = all months. */
+function currentMonthName(){return new Date().toLocaleDateString('en-PH',{month:'long'}).toUpperCase();}
+function allRows(){return state.months.flatMap(mo=>mo.rows);}
+function activeRows(){return state.months[state.months.length-1].rows;}
+
 function defaultState(){
   return {
     accounts:['DGC ESTORE 1','DGC ESTORE 2','DGC ESTORE 3','DGC ESTORE 4','DGC ESTORE 5','DGC ESTORE 6'],
@@ -391,7 +415,7 @@ function defaultState(){
     ],
     promo:{on:false,type:'percent',value:10},
     wdp:{owned:0},
-    rows: seedRows()
+    months:[{name:currentMonthName(),collapsed:false,rows:seedRows()}]
   };
 }
 function seedRows(){ const r=[]; for(let i=1;i<=12;i++) r.push(blankRow(i)); return r; }
@@ -402,8 +426,13 @@ function blankRow(n){
 function migrate(st){
   /* migrate: old account -> gIGN, remove giftPSL */
   (st.rows||[]).forEach(r=>{ if(r.account!==undefined){ if(!r.gIGN) r.gIGN=r.account; delete r.account; } if(r.giftPSL!==undefined) delete r.giftPSL; });
+  /* v3: flat rows -> months array */
+  if(!st.months||!st.months.length){
+    st.months=[{name:currentMonthName(),collapsed:false,rows:st.rows||[]}];
+  }
+  delete st.rows;
   /* FIX: normalize Date Ordered -> ISO (old saved "DEC 21" values broke the calendar) */
-  (st.rows||[]).forEach(r=>{ if(r.ordered){ r.ordered=parseDateInput(r.ordered); } });
+  st.months.forEach(mo=>(mo.rows||[]).forEach(r=>{ if(r.ordered){ r.ordered=parseDateInput(r.ordered); } }));
   return st;
 }
 function load(){
@@ -485,7 +514,7 @@ function togglePromo(){ state.promo.on=!state.promo.on; recalc(); saveAll(); }
 
 /* ================= WDP (aggregate from rows — computation only, card removed) ================= */
 function wdpTotals(){
-  let dias=0; state.rows.forEach(r=>{if(!r.done)dias+=diasOf(r)}); // active rows lang
+  let dias=0; activeRows().forEach(r=>{if(!r.done)dias+=diasOf(r)}); // active month lang
   const need=Math.ceil(dias/DIAS_PER_WDP);
   const owned=Math.min(WDP_MAX,+state.wdp.owned||0);
   const daily=owned*20; // 20 dias/day per WDP
@@ -507,7 +536,7 @@ function groupStats(grp){
 /* ================= ACCOUNTS (BASIS: may customer name = used na yung slot; 3 customers = 1 use) ================= */
 function acctUsage(name){
   let cnt=0;
-  state.rows.forEach(r=>{ if(r.gIGN===name && (r.customer||'').trim()) cnt++; });
+  activeRows().forEach(r=>{ if(r.gIGN===name && (r.customer||'').trim()) cnt++; });
   /* 1 account = 3 customers — 1st row na may customer = 1/3, 2nd = 2/3, 3rd = 3/3 (base sa table) */
   return cnt;
 }
@@ -516,7 +545,7 @@ function acctUsage(name){
    n/3 = ilang customers na ang naka-assign diyan (1 account = 3 customers). */
 function renderAccounts(){
   const map={};
-  state.rows.forEach(r=>{
+  activeRows().forEach(r=>{
     const a=(r.gIGN||'').trim();
     if(!a) return;
     if(!map[a]) map[a]={name:a,used:0};
@@ -546,32 +575,32 @@ function renameAccount(i){
   if(v===null||!v.trim())return;
   const nv=v.trim();
   state.accounts[i]=nv;
-  state.rows.forEach(r=>{if(r.gIGN===old)r.gIGN=nv});
+  allRows().forEach(r=>{if(r.gIGN===old)r.gIGN=nv});
   saveAll(); renderTable(); recalc(); showToast('Renamed → '+nv);
 }
 
 /* group updates: propagate value to ALL rows ng group (3 customers = 1 account) */
-function updGroupField(idxs,f,v){
-  idxs.split(',').forEach(x=>{ state.rows[+x][f]=(f==='curDias'||f==='curWdp')?(parseFloat(v)||0):v; });
+function updGroupField(m,idxs,f,v){
+  idxs.split(',').forEach(x=>{ state.months[m].rows[+x][f]=(f==='curDias'||f==='curWdp')?(parseFloat(v)||0):v; });
   saveAll(); renderTable(); recalc();
 }
 /* NSL: value nasa FIRST row lang ng group (para hindi mag-double ang sum) */
-function updGroupNSL(idxs,v){
+function updGroupNSL(m,idxs,v){
   const a=idxs.split(',');
-  state.rows[+a[0]].giftNSL=parseFloat(v)||0;
-  for(let k=1;k<a.length;k++) state.rows[+a[k]].giftNSL=0;
+  state.months[m].rows[+a[0]].giftNSL=parseFloat(v)||0;
+  for(let k=1;k<a.length;k++) state.months[m].rows[+a[k]].giftNSL=0;
   saveAll(); renderTable(); recalc();
 }
 /* click Gmail = copy Gmail + ID + Server */
-function copyGifter(i){
-  const r=state.rows[i];
+function copyGifter(m,i){
+  const r=state.months[m].rows[i];
   const parts=[r.gGmail&&('📧 '+r.gGmail), r.gID&&('ID: '+r.gID), r.gServer&&('Server: '+r.gServer)].filter(Boolean);
   if(!parts.length) return showToast('Walang Gmail / ID / Server pa 📝');
   copyText(parts.join('\n'));
 }
 /* summary button = copy follow-instructions with IGN/ID/Delivery Date */
-function summaryGifter(i){
-  const r=state.rows[i];
+function summaryGifter(m,i){
+  const r=state.months[m].rows[i];
   const d=datesOf(r).delivery;
   const txt=`Kindly follow
 
@@ -588,9 +617,10 @@ Thank You. Happy Gaming 😊`;
   navigator.clipboard.writeText(txt).then(()=>showToast('Follow-summary copied 📋')).catch(()=>showToast('Copy failed'));
 }
 
+/* group updates: propagate value to ALL rows ng group (3 customers = 1 account) */
 /* ================= CALC & RENDER ================= */
 function compute(){
-  const rows=state.rows;
+  const rows=allRows(); /* lahat ng months — cumulative stocks/income/chips */
   let addNSL=0,incNSL=0;
   const done=rows.filter(r=>r.done);
   done.forEach(r=>{incNSL+=(r.giftNSL||0)});
@@ -606,7 +636,7 @@ function recalc(){
   $('stockTotal').textContent=c.stockNSL;
   $('incTotal').textContent=money(c.incNSL);
   $('chips').innerHTML=`
-    <div class="chip"><i class="fas fa-users"></i> Rows <b>${state.rows.filter(r=>r.customer||r.gIGN).length}</b></div>
+    <div class="chip"><i class="fas fa-users"></i> Rows <b>${allRows().filter(r=>r.customer||r.gIGN).length}</b></div>
     <div class="chip"><i class="fas fa-check-circle" style="color:var(--success)"></i> Done <b>${c.cntDone}</b></div>
     <div class="chip"><i class="fas fa-shopping-cart" style="color:var(--info)"></i> Orders <b>${c.totalOrders}</b></div>
     <div class="chip"><i class="fas fa-gem" style="color:var(--purple)"></i> WDP need <b>${c.wdpNeed}</b></div>
@@ -623,7 +653,7 @@ function renderCalendar(){
   $('calMonth').textContent=now.toLocaleDateString('en-PH',{month:'long',year:'numeric'});
   const first=new Date(y,m,1).getDay(),days=new Date(y,m+1,0).getDate();
   const t=todayStr();
-  const schedDays=new Set(state.rows.map(r=>datesOf(r).expect).filter(Boolean));
+  const schedDays=new Set(allRows().map(r=>datesOf(r).expect).filter(Boolean));
   let h=['S','M','T','W','T','F','S'].map(d=>`<div class="hd">${d}</div>`).join('');
   for(let i=0;i<first;i++)h+='<div class="d"></div>';
   for(let d=1;d<=days;d++){
@@ -637,10 +667,10 @@ function renderCalendar(){
 }
 
 /* ================= MINI CALENDAR POPUP (date picker) ================= */
-let calTarget=null,calView=null;
-function openCal(i,el){
-  calTarget=i;
-  const r=state.rows[i];
+let calTarget=null,calView=null; /* calTarget = {m,i} */
+function openCal(m,i,el){
+  calTarget={m,i};
+  const r=state.months[m].rows[i];
   calView=r.ordered?new Date(r.ordered+'T00:00:00'):new Date();
   if(isNaN(calView.getTime())) calView=new Date(); /* FIX: invalid/legacy date -> default to today */
   drawCalPop();
@@ -654,7 +684,7 @@ function openCal(i,el){
 }
 function drawCalPop(){
   const y=calView.getFullYear(),m=calView.getMonth();
-  const r=state.rows[calTarget];
+  const r=state.months[calTarget.m].rows[calTarget.i];
   const sel=(r&&r.ordered)?r.ordered:'';
   let h=`<div class="cp-head"><button type="button" onclick="event.stopPropagation();calNav(-1)"><i class="fas fa-chevron-left"></i></button><b>${calView.toLocaleDateString('en-PH',{month:'long',year:'numeric'})}</b><button type="button" onclick="event.stopPropagation();calNav(1)"><i class="fas fa-chevron-right"></i></button></div><div class="cp-grid">`;
   h+=['S','M','T','W','T','F','S'].map(d=>`<div class="cp-hd">${d}</div>`).join('');
@@ -669,8 +699,8 @@ function drawCalPop(){
 }
 function calNav(n){if(!calView||isNaN(calView.getTime()))calView=new Date();calView.setMonth(calView.getMonth()+n);drawCalPop()}
 function pickCal(ds){
-  if(calTarget!==null&&calTarget<state.rows.length){
-    state.rows[calTarget].ordered=ds;
+  if(calTarget){
+    state.months[calTarget.m].rows[calTarget.i].ordered=ds;
     saveAll();renderTable();recalc();
     if(ds)showToast('Date set: '+fmtDate(ds)+' 🗓');
   }
@@ -685,16 +715,16 @@ document.addEventListener('click',e=>{
 /* ================= MAIN TABLE ================= */
 /* merged = {stats,span,idxs} kapag first row ng group; null kung continuation row.
    Merged (rowspan) columns: NSL, Orders, Gmail, IGN/Account, ID, Server, Current💎, Current WDP, WDP Need. */
-function rowHTML(r,i,merged){
+function rowHTML(r,m,i,merged){
   const {expect,delivery}=datesOf(r);
   const days=daysBetween(r.ordered,delivery);
   const trCls=r.done?'row-done':'';
   const hue=acctHue(r.gIGN);
-  const cell=(f,ph,type='text',style='')=>`<td><input type="${type}" style="${style}" value="${esc(r[f]??'')}" placeholder="${ph}" onchange="updRow(${i},'${f}',this.value)"></td>`;
-  const chk=(f)=>`<td><input type="checkbox" ${r[f]?'checked':''} onchange="updRow(${i},'${f}',this.checked)"></td>`;
+  const cell=(f,ph,type='text',style='')=>`<td><input type="${type}" style="${style}" value="${esc(r[f]??'')}" placeholder="${ph}" onchange="updRow(${m},${i},'${f}',this.value)"></td>`;
+  const chk=(f)=>`<td><input type="checkbox" ${r[f]?'checked':''} onchange="updRow(${m},${i},'${f}',this.checked)"></td>`;
   const ro=(v)=>`<td class="${dateCls(v)}"><input type="text" value="${fmtDate(v)}" readonly tabindex="-1"></td>`;
   const doneCell=r.done
-    ?`<td class="keepcell" style="background:#e8f9f0 !important"><span class="completed-pill" onclick="updRow(${i},'done',false)" title="Click to undo">COMPLETED ✓</span></td>`
+    ?`<td class="keepcell" style="background:#e8f9f0 !important"><span class="completed-pill" onclick="updRow(${m},${i},'done',false)" title="Click to undo">COMPLETED ✓</span></td>`
     :chk('done');
 
   /* merged gifter cells (rowspan) — lilitaw lang sa first row ng group */
@@ -702,85 +732,141 @@ function rowHTML(r,i,merged){
   if(merged){
     const g=merged.stats, sp=merged.span, ix=merged.idxs;
     mergedCells=`
-      <td class="numcell keepcell" rowspan="${sp}"><input type="number" style="min-width:52px" value="${g.nsl}" onchange="updGroupNSL('${ix}',this.value)" title="NSL para sa buong group (3 customers)"></td>
+      <td class="numcell keepcell" rowspan="${sp}"><input type="number" style="min-width:52px" value="${g.nsl}" onchange="updGroupNSL(${m},'${ix}',this.value)" title="NSL para sa buong group (3 customers)"></td>
       <td class="numcell keepcell ${g.orders<0?'neg':''}" rowspan="${sp}" title="Orders = Followed − NSL (buong group)" style="font-size:14px">${g.orders}</td>
-      <td rowspan="${sp}" class="keepcell"><input type="text" style="min-width:170px" value="${esc(r.gGmail)}" placeholder="gifter@gmail.com" title="Click = copy Gmail + ID + Server 📋" onclick="copyGifter(${i})" onchange="updGroupField('${ix}','gGmail',this.value)"></td>
+      <td rowspan="${sp}" class="keepcell"><input type="text" style="min-width:170px" value="${esc(r.gGmail)}" placeholder="gifter@gmail.com" title="Click = copy Gmail + ID + Server 📋" onclick="copyGifter(${m},${i})" onchange="updGroupField(${m},'${ix}','gGmail',this.value)"></td>
       <td class="keepcell" rowspan="${sp}" style="min-width:180px;background:#fffaf3;border-left:2px dashed var(--pink-pale);border-right:2px dashed var(--pink-pale)">
         <div class="acct-cell" title="Gifter account — click = copy 📋">
-          <input type="text" class="acct-in" style="color:hsl(${hue},70%,42%)" value="${esc(r.gIGN)}" placeholder="Account..." title="EDITABLE — baguhin ang gifter account para sa buong group (3 rows)" onchange="updGroupField('${ix}','gIGN',this.value)">
-          <button class="editbtn" onclick="summaryGifter(${i})" title="Copy follow-summary 📋 (Kindly follow...)"><i class="fas fa-clipboard-list"></i></button>
+          <input type="text" class="acct-in" style="color:hsl(${hue},70%,42%)" value="${esc(r.gIGN)}" placeholder="Account..." title="EDITABLE — baguhin ang gifter account para sa buong group (3 rows)" onchange="updGroupField(${m},'${ix}','gIGN',this.value)">
+          <button class="editbtn" onclick="summaryGifter(${m},${i})" title="Copy follow-summary 📋 (Kindly follow...)"><i class="fas fa-clipboard-list"></i></button>
         </div>
       </td>
-      <td rowspan="${sp}" class="keepcell"><input type="text" style="min-width:60px" value="${esc(r.gID)}" placeholder="ID" onchange="updGroupField('${ix}','gID',this.value)"></td>
-      <td rowspan="${sp}" class="keepcell"><input type="text" style="min-width:70px" value="${esc(r.gServer)}" placeholder="Server" onchange="updGroupField('${ix}','gServer',this.value)"></td>
-      <td class="keepcell" rowspan="${sp}" title="Current Diamonds — editable"><input type="number" style="min-width:74px;font-weight:900;color:var(--purple);text-align:center" value="${g.curDias}" onchange="updGroupField('${ix}','curDias',this.value)"></td>
-      <td class="keepcell" rowspan="${sp}" title="Current WDP — editable"><input type="number" style="min-width:64px;font-weight:900;color:var(--info);text-align:center" value="${g.curWdp}" onchange="updGroupField('${ix}','curWdp',this.value)"></td>
+      <td rowspan="${sp}" class="keepcell"><input type="text" style="min-width:60px" value="${esc(r.gID)}" placeholder="ID" onchange="updGroupField(${m},'${ix}','gID',this.value)"></td>
+      <td rowspan="${sp}" class="keepcell"><input type="text" style="min-width:70px" value="${esc(r.gServer)}" placeholder="Server" onchange="updGroupField(${m},'${ix}','gServer',this.value)"></td>
+      <td class="keepcell" rowspan="${sp}" title="Current Diamonds — editable"><input type="number" style="min-width:74px;font-weight:900;color:var(--purple);text-align:center" value="${g.curDias}" onchange="updGroupField(${m},'${ix}','curDias',this.value)"></td>
+      <td class="keepcell" rowspan="${sp}" title="Current WDP — editable"><input type="number" style="min-width:64px;font-weight:900;color:var(--info);text-align:center" value="${g.curWdp}" onchange="updGroupField(${m},'${ix}','curWdp',this.value)"></td>
       <td class="keepcell" rowspan="${sp}" style="font-weight:900;color:var(--purple);font-size:13px" title="WDP Needed = Current WDP − 10">${g.wdpNeed}</td>`;
   }
 
   return `<tr class="${trCls}">
     <td style="font-weight:900;color:var(--pink)">${r.n}</td>
-    <td class="custcell"><input type="text" value="${esc(r.customer)}" placeholder="Customer name..." onchange="updRow(${i},'customer',this.value)"></td>
+    <td class="custcell"><input type="text" value="${esc(r.customer)}" placeholder="Customer name..." onchange="updRow(${m},${i},'customer',this.value)"></td>
     ${chk('draw')}${chk('collect')}
     ${mergedCells}
     ${cell('cIGN','Client IGN','text','min-width:120px')}${cell('cMLID','MLID','text','min-width:80px')}${cell('cMLServer','Server','text','min-width:70px')}
     ${chk('followed')}
-    <td><input type="text" class="date-in" readonly value="${fmtDate(r.ordered)}" placeholder="🗓 Tap for calendar" title="Click = calendar popup 📅 (tap lang, no typing)" onclick="openCal(${i},this)"></td>
+    <td><input type="text" class="date-in" readonly value="${fmtDate(r.ordered)}" placeholder="🗓 Tap for calendar" title="Click = calendar popup 📅 (tap lang, no typing)" onclick="openCal(${m},${i},this)"></td>
     ${ro(expect)}
     ${ro(delivery)}
     <td class="numcell">${days===null?'—':days}</td>
-    <td><button class="paypill pay-${r.payment}" onclick="cyclePay(${i})">${r.payment}</button></td>
+    <td><button class="paypill pay-${r.payment}" onclick="cyclePay(${m},${i})">${r.payment}</button></td>
     ${doneCell}
-    <td class="keepcell"><button class="delrow" onclick="delRow(${i})" title="Delete row"><i class="fas fa-trash"></i></button></td>
+    <td class="keepcell"><button class="delrow" onclick="delRow(${m},${i})" title="Delete row"><i class="fas fa-trash"></i></button></td>
   </tr>`;
+}
+
+/* ================= MONTH HEADERS (hide/show, rename, add, delete) ================= */
+function toggleMonth(m){ state.months[m].collapsed=!state.months[m].collapsed; saveAll(false); renderTable(); }
+function renameMonth(m){
+  const v=prompt('Rename month:',state.months[m].name);
+  if(v===null||!v.trim())return;
+  state.months[m].name=v.trim().toUpperCase();
+  saveAll(); renderTable(); showToast('Month renamed → '+state.months[m].name);
+}
+/* Add month: kokopyahin lang ang GIFTER details (Gmail, IGN/Account, ID, Server) ng source month —
+   lahat ng iba (customer, dates, NSL, dias, payment, done) ay blank/reset. Pwede ring i-delete ang mga rows after. */
+function addMonth(copyFrom){
+  const srcMo=state.months[copyFrom];
+  const v=prompt('Name ng bagong month (gifter details ng '+srcMo.name+' ang kokopyahin):',currentMonthName());
+  if(v===null||!v.trim())return;
+  const rows=srcMo.rows.map((r,i)=>{
+    const nr=blankRow(i+1);
+    nr.gGmail=r.gGmail||'';
+    nr.gIGN=r.gIGN||'';
+    nr.gID=r.gID||'';
+    nr.gServer=r.gServer||'';
+    return nr;
+  });
+  state.months.splice(copyFrom+1,0,{name:v.trim().toUpperCase(),collapsed:false,rows});
+  saveAll(); renderTable(); recalc(); showToast('Month added: '+v.trim().toUpperCase()+' 📅 (gifter details copied from '+srcMo.name+')');
+}
+function delMonth(m){
+  if(state.months.length<=1){ showToast('Hindi ma-delete ang last remaining month! 🚫'); return; }
+  const nm=state.months[m].name;
+  if(!confirm('Delete ang month "'+nm+'" kasama LAHAT ng rows nito? Hindi na ito maibabalik!'))return;
+  state.months.splice(m,1);
+  saveAll(); renderTable(); recalc(); showToast('Month '+nm+' deleted 🗑');
 }
 
 function renderTable(){
   const q=($('search').value||'').toLowerCase().trim();
-  const rows=state.rows.filter(r=>!q||(r.gIGN+' '+r.customer+' '+r.cIGN+' '+r.gGmail).toLowerCase().includes(q));
-  if(!rows.length){
+  let h='';
+  state.months.forEach((mo,m)=>{
+    const rows=mo.rows.filter(r=>!q||(r.gIGN+' '+r.customer+' '+r.cIGN+' '+r.gGmail).toLowerCase().includes(q));
+    if(q&&!rows.length) return; /* walang match sa month na ito — itago habang nagse-search */
+    const used=mo.rows.filter(r=>(r.customer||'').trim()).length;
+    const hid=mo.collapsed&&!q;
+    h+=`<tr class="month-head">
+      <td colspan="24">
+        <div class="mh-inner">
+          <button class="mh-toggle" onclick="toggleMonth(${m})" title="${hid?'Show':'Hide'} month"><i class="fas fa-chevron-${hid?'right':'down'}"></i></button>
+          <b class="mh-name" onclick="renameMonth(${m})" title="Click to rename ✏">${esc(mo.name)}</b>
+          <span class="mh-info">${mo.rows.length} rows · ${used} customers · ${mo.rows.length-used} empty slots</span>
+          <span class="mh-actions">
+            <button onclick="addRowTo(${m})" title="Add row sa month na ito"><i class="fas fa-plus"></i> Row</button>
+            <button onclick="addMonth(${m})" title="Add new month — kokopyahin ang Gifter details (Gmail/IGN/ID/Server) ng month na ito"><i class="fas fa-calendar-plus"></i> Month</button>
+            <button class="mh-danger" onclick="delMonth(${m})" title="Delete this month"><i class="fas fa-trash"></i></button>
+          </span>
+        </div>
+      </td>
+    </tr>`;
+    if(hid) return; /* collapsed — rows hidden */
+    for(let g=0;g<rows.length;g+=3){
+      const grp=rows.slice(g,g+3);
+      const idxs=grp.map(r=>mo.rows.indexOf(r));
+      const stats=groupStats(grp);
+      grp.forEach((r,k)=>{
+        h+=rowHTML(r,m,idxs[k],k===0?{stats,span:grp.length,idxs:idxs.join(',')}:null);
+      });
+      /* divider after every 3 customers */
+      if(g+3<rows.length) h+='<tr class="divider"><td colspan="24"></td></tr>';
+    }
+  });
+  if(!h){
     $('tblBody').innerHTML='<tr><td colspan="24" style="padding:40px;text-align:center;color:var(--pink-light)"><i class="fas fa-inbox"></i> Walang match — add a row!</td></tr>';
     return;
-  }
-  let h='';
-  for(let g=0;g<rows.length;g+=3){
-    const grp=rows.slice(g,g+3);
-    const idxs=grp.map(r=>state.rows.indexOf(r));
-    const stats=groupStats(grp);
-    grp.forEach((r,k)=>{
-      h+=rowHTML(r,idxs[k],k===0?{stats,span:grp.length,idxs:idxs.join(',')}:null);
-    });
-    /* divider after every 3 customers */
-    if(g+3<rows.length) h+='<tr class="divider"><td colspan="24"></td></tr>';
   }
   $('tblBody').innerHTML=h;
 }
 
-function updRow(i,f,v){
+function updRow(m,i,f,v){
   const numFields=['giftNSL','curDias','curWdp'];
-  state.rows[i][f]=numFields.includes(f)?(parseFloat(v)||0):v;
+  state.months[m].rows[i][f]=numFields.includes(f)?(parseFloat(v)||0):v;
   saveAll(); recalc();
   if(['ordered','followed','done','payment','giftNSL','customer'].includes(f)) renderTable();
 }
-/* Date Ordered: pwede i-type (DEC 21 / ISO) o i-click para lumabas mini calendar */
-function updDate(i,v){
-  const ds=parseDateInput(v);
-  state.rows[i].ordered=ds;
-  saveAll(); renderTable(); recalc();
-  if(v && !ds) showToast('Invalid date format — gamitin ang "DEC 21" 🗓');
+function cyclePay(m,i){ state.months[m].rows[i].payment=state.months[m].rows[i].payment==='Paid'?'Unpaid':'Paid'; saveAll(); renderTable(); recalc(); showToast('Payment: '+state.months[m].rows[i].payment); }
+/* global Add Row = sa ACTIVE (last) month */
+function addRow(){ addRowTo(state.months.length-1); }
+function addRowTo(m){
+  const rows=state.months[m].rows;
+  const n=rows.length+1;
+  rows.push(blankRow(n));
+  saveAll(); renderTable(); recalc(); showToast('Row #'+n+' added sa '+state.months[m].name+' ➕');
 }
-function cyclePay(i){ state.rows[i].payment=state.rows[i].payment==='Paid'?'Unpaid':'Paid'; saveAll(); renderTable(); recalc(); showToast('Payment: '+state.rows[i].payment); }
-function addRow(){ const n=state.rows.length+1; state.rows.push(blankRow(n)); saveAll(); renderTable(); recalc(); showToast('Row #'+n+' added ➕'); }
-function delRow(i){ if(!confirm('Delete row #'+state.rows[i].n+'?'))return; state.rows.splice(i,1); state.rows.forEach((r,x)=>r.n=x+1); saveAll(); renderTable(); recalc(); }
+function delRow(m,i){ if(!confirm('Delete row #'+state.months[m].rows[i].n+'?'))return; state.months[m].rows.splice(i,1); state.months[m].rows.forEach((r,x)=>r.n=x+1); saveAll(); renderTable(); recalc(); }
 
 /* ================= EXPORT ================= */
 function exportExcel(){
-  const head=['#','Customer','Draw','Collect','Gift NSL','Orders','Gifter Gmail','Gifter IGN/Account','Gifter ID','Gifter Server','Current Diamonds','Current WDP','WDP Needed (CurWDP-10)','Client IGN','MLID','ML Server','Followed','Date Ordered','Expect(+8d)','Delivery(-1d)','Days','Payment','Done'];
-  const data=state.rows.map((r,idx)=>{
-    const{expect,delivery}=datesOf(r);const days=daysBetween(r.ordered,delivery);
-    const k=idx%3;let nsl='',orders='',cd='',cw='',wn='';
-    if(k===0){const st=groupStats(state.rows.slice(idx,idx+3));nsl=st.nsl;orders=st.orders;cd=st.curDias;cw=st.curWdp;wn=st.wdpNeed;}
-    return [r.n,r.customer,r.draw?'✓':'',r.collect?'✓':'',nsl,orders,k===0?r.gGmail:'',k===0?r.gIGN:'',r.gID,r.gServer,cd,cw,wn,r.cIGN,r.cMLID,r.cMLServer,r.followed?'✓':'',fmtDate(r.ordered),fmtDate(expect),fmtDate(delivery),days===null?'':days,r.payment,r.done?'COMPLETED':'']
+  const head=['Month','#','Customer','Draw','Collect','Gift NSL','Orders','Gifter Gmail','Gifter IGN/Account','Gifter ID','Gifter Server','Current Diamonds','Current WDP','WDP Needed (CurWDP-10)','Client IGN','MLID','ML Server','Followed','Date Ordered','Expect(+8d)','Delivery(-1d)','Days','Payment','Done'];
+  const data=[];
+  state.months.forEach(mo=>{
+    mo.rows.forEach((r,idx)=>{
+      const{expect,delivery}=datesOf(r);const days=daysBetween(r.ordered,delivery);
+      const k=idx%3;let nsl='',orders='',cd='',cw='',wn='';
+      if(k===0){const st=groupStats(mo.rows.slice(idx,idx+3));nsl=st.nsl;orders=st.orders;cd=st.curDias;cw=st.curWdp;wn=st.wdpNeed;}
+      data.push([mo.name,r.n,r.customer,r.draw?'✓':'',r.collect?'✓':'',nsl,orders,k===0?r.gGmail:'',k===0?r.gIGN:'',r.gID,r.gServer,cd,cw,wn,r.cIGN,r.cMLID,r.cMLServer,r.followed?'✓':'',fmtDate(r.ordered),fmtDate(expect),fmtDate(delivery),days===null?'':days,r.payment,r.done?'COMPLETED':'']);
+    });
   });
   data.unshift(head);
   const ws=XLSX.utils.aoa_to_sheet(data);
@@ -797,6 +883,7 @@ function exportExcel(){
   const w=wdpTotals();
   const ws3=XLSX.utils.aoa_to_sheet([
     ['Weekly Diamond Pass Computation'],
+    ['Active month',state.months[state.months.length-1].name],
     ['Total dias needed (active rows)',w.dias],
     ['WDP needed',w.need],
     ['WDP owned (max 10)',w.owned],
@@ -805,7 +892,7 @@ function exportExcel(){
     ['WDP still needed to buy',w.more],
     ['Dias / 7 days (owned)',w.weekly],
   ]);
-  ws3['!cols']=[{wch:30},{wch:12}];
+  ws3['!cols']=[{wch:30},{wch:14}];
   XLSX.utils.book_append_sheet(wb,ws3,'WDP');
   XLSX.writeFile(wb,'Starlight_Monitor_'+todayStr()+'.xlsx');
   showToast('Exported to Excel 📊');
@@ -821,9 +908,84 @@ function resetAll(){
   showToast('Data reset 🔄');
 }
 
+/* ================= AUTO-IMPORT STARLIGHT ORDERS FROM DGC eStore ORDER MANAGEMENT =================
+   Same Firebase project kaya live nakikinig ito sa 'orders' node.
+   Kapag may nag-order ng Starlight sa admin page (kahit anong device/website),
+   AUTOMATIC na IFI-FILL nito ang EMPTY ROW (walang customer name) sa ACTIVE month
+   (pinakabagong month) na naka-assign sa account na may AVAILABLE SLOT (used < 3).
+   Walang bagong row kapag may empty slot pa. Kapag puno na lahat, saka lang mag-a-add
+   ng bagong row sa active month (fallback para hindi mawala ang order).
+   Dedup-safe: ang _imported map ay naka-save din sa Firebase state. */
+function startStarlightOrderSync(){
+  if(!fbDB||typeof firebase==='undefined') return;
+  const seen = state._imported = state._imported || {};
+  const root = firebase.database().ref('orders');
+  /* Ang mga LUMANG orders ay i-mark as seen lang — hindi na i-import para walang duplicate
+     sa mga rows na manually nang nai-type dito. Ang mga BAGONG orders pagkatapos nito ang auto-import. */
+  root.limitToLast(200).get().then(snap=>{
+    snap.forEach(ch=>{ const o=ch.val(); if(o&&o.orderId) seen[o.orderId]=true; });
+    saveAll(false);
+    root.limitToLast(30).on('child_added',ch=>{
+      const o=ch.val(); if(!o||!o.orderId) return;
+      if(seen[o.orderId]) return;
+      seen[o.orderId]=true;
+      const item=(o.itemName||o.item||'').toString().toLowerCase();
+      if(!item.includes('starlight')){ saveAll(false); return; } /* non-Starlight orders: ignore */
+      const orderedDate=o.createdAt?new Date(o.createdAt).toISOString().slice(0,10):todayStr();
+      const cust=(o.enteredCustomerName||'').toString().trim()||((o.customerName&&o.customerName!=='Walk-in'?o.customerName:'')||'').toString().trim();
+      const ign=(o.ign||'').toString().trim();
+      const mlid=(o.gameId||'').toString().trim();
+      const mlsrv=(o.serverId||'').toString().trim();
+      /* extra guard: huwag mag-doble kung may existing row nang ganito (kahit anong month) */
+      const dup=allRows().some(r=>r.cMLID===mlid&&r.cIGN===ign&&r.ordered===orderedDate&&r.customer===cust);
+      if(!dup){
+        const rows=activeRows(); /* ACTIVE month lang ang pinupunan */
+        /* bilangin kung ilang customers na ang naka-assign sa bawat account (1 account = 3 customers) */
+        const usage={};
+        rows.forEach(r=>{ const a=(r.gIGN||'').trim(); if(!a) return; usage[a]=(usage[a]||0)+(((r.customer||'').trim())?1:0); });
+        /* 1) hanapin ang UNANG empty row na naka-assign sa account na may available slot (used < 3) */
+        let target=-1;
+        for(let i=0;i<rows.length;i++){
+          const r=rows[i];
+          if((r.customer||'').trim()) continue;                 /* may customer na — skip */
+          const a=(r.gIGN||'').trim();
+          if(a && (usage[a]||0)>=3) continue;                   /* account FULL na (3/3) — skip, hanap iba */
+          target=i; break;
+        }
+        if(target>=0){
+          /* FILL the empty row — walang bagong row na nadadagdag */
+          const r=rows[target];
+          r.customer=cust;
+          r.cIGN=ign;
+          r.cMLID=mlid;
+          r.cMLServer=mlsrv;
+          r.ordered=orderedDate;
+          r.payment='Unpaid';
+          showToast('\u2b50 Order filled sa empty row #'+r.n+' ('+state.months[state.months.length-1].name+' \u2192 '+(r.gIGN||'account')+')');
+        } else {
+          /* walang empty/available slot — fallback: bagong row sa active month */
+          const n=rows.length+1;
+          const row=blankRow(n);
+          row.customer=cust;
+          row.cIGN=ign;
+          row.cMLID=mlid;
+          row.cMLServer=mlsrv;
+          row.ordered=orderedDate;
+          row.payment='Unpaid';
+          rows.push(row);
+          showToast('\u2b50 Starlight order imported (bagong row — puno na lahat ng slots): '+(cust||ign||'Walk-in'));
+        }
+      }
+      saveAll(false);
+      renderTable(); recalc();
+    });
+  }).catch(()=>{});
+}
+
 /* INIT */
 renderPrices(); renderTable(); recalc();
 if(fbReady()&&fbInit()) fbStart(); else syncBadge(false);
+if(fbDB) startStarlightOrderSync();
 setInterval(()=>{renderTable();renderCalendar()},60000);
 </script>
 </body>
