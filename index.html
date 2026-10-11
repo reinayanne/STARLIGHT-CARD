@@ -2,6 +2,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,6 +12,7 @@
 <link rel="icon" type="image/png" sizes="64x64" href="adminfavicon.ico">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <style>
@@ -88,6 +90,7 @@ table.mini input:focus{border-color:var(--pink);background:#fff5f9}
 .section-title{font-size:20px;font-weight:900;color:var(--pink);margin:6px 0 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .section-title small{font-size:12px;color:var(--pink-light);font-weight:600}
 .tbl-wrap{background:#fff;border-radius:22px;box-shadow:0 10px 34px rgba(255,79,163,.16);overflow:visible;border:2px solid rgba(255,79,163,.1)}
+.tbl-wrap.lp-drag{cursor:grabbing;user-select:none;-webkit-user-select:none}
 table.main{border-collapse:separate;border-spacing:0;font-size:12.5px;min-width:1500px;width:100%}
 table.main th{position:sticky;top:0;z-index:10;background:linear-gradient(135deg,var(--pink),var(--pink-light));color:#fff;padding:10px 8px;font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;text-align:center;border-right:1px solid rgba(255,255,255,.25)}
 table.main th.grp{background:var(--pink-dark)}
@@ -203,6 +206,51 @@ tr.month-head td{background:linear-gradient(135deg,var(--pink-dark),var(--pink))
 .chip{background:#fff;border-radius:14px;padding:10px 18px;box-shadow:0 4px 16px rgba(255,79,163,.12);font-size:12px;font-weight:700;color:var(--pink-light);display:flex;gap:8px;align-items:center}
 .chip b{color:var(--pink);font-size:16px}
 
+
+/* ===== NEW: checklist toggle / drag / music / quota / certificate ===== */
+.chkall-btn{background:rgba(255,255,255,.25);border:1px solid rgba(255,255,255,.45);color:#fff;width:20px;height:20px;border-radius:6px;font-size:9px;cursor:pointer;margin-left:3px;vertical-align:middle;transition:.2s}
+.chkall-btn:hover{background:#fff;color:var(--pink)}
+tr[draggable]{cursor:grab}
+tr[draggable]:active{cursor:grabbing}
+tr.dragging{opacity:.35}
+tr.drag-over td{box-shadow:inset 0 3px 0 var(--pink)}
+.hbtns button{position:relative}
+#musicBtn.playing{background:rgba(255,215,0,.45)!important;animation:musicPulse 1.5s infinite}
+@keyframes musicPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,215,0,.4)}50%{box-shadow:0 0 14px 5px rgba(255,215,0,.25)}}
+.qbadge{position:absolute;top:-5px;right:-5px;background:var(--danger);color:#fff;font-size:9px;font-weight:900;min-width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid #fff;padding:0 2px}
+/* quota modal */
+.quota-overlay{position:fixed;inset:0;background:rgba(13,93,101,.55);backdrop-filter:blur(8px);z-index:6500;display:none;align-items:center;justify-content:center;padding:16px}
+.quota-overlay.show{display:flex}
+.quota-box{background:#fff;border-radius:22px;width:100%;max-width:560px;max-height:85vh;overflow:hidden;display:flex;flex-direction:column;border:2px solid var(--gold);box-shadow:0 25px 90px rgba(0,0,0,.35)}
+.quota-head{background:linear-gradient(135deg,var(--teal),#147a85);color:#fff;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.quota-head h3{font-size:15px;display:flex;gap:8px;align-items:center}
+.quota-head h3 i{color:var(--gold)}
+.quota-head button{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);color:#fff;width:32px;height:32px;border-radius:10px;cursor:pointer;flex:none}
+.quota-body{padding:16px 20px;overflow-y:auto}
+.quota-item2{display:flex;justify-content:space-between;align-items:center;gap:10px;background:#fff8f9;border:1.5px solid #ffd6e8;border-radius:14px;padding:12px 14px;margin-bottom:10px;flex-wrap:wrap}
+/* certificate */
+.cert-overlay{position:fixed;inset:0;background:rgba(10,40,45,.75);backdrop-filter:blur(10px);z-index:7000;display:none;align-items:center;justify-content:center;padding:16px;flex-direction:column;gap:14px}
+.cert-overlay.show{display:flex}
+.cert-modal{background:linear-gradient(135deg,#fdfcf8,#f7f4ed);width:100%;max-width:640px;border:3px solid var(--gold);border-radius:4px;box-shadow:0 30px 120px rgba(0,0,0,.45);position:relative;overflow:hidden;text-align:center}
+.cert-inner-border{position:absolute;inset:12px;border:1.5px solid var(--gold);pointer-events:none}
+.cert-head2{background:linear-gradient(135deg,var(--teal),#147a85);padding:26px 20px;border-bottom:3px solid var(--gold)}
+.cert-head2 img{height:60px;border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,.35)}
+.cert-head2 h2{color:#fff;font-size:20px;letter-spacing:3px;margin-top:12px;text-transform:uppercase}
+.cert-head2 p{color:rgba(255,255,255,.85);font-size:11px;letter-spacing:2px;margin-top:4px;text-transform:uppercase}
+.cert-mid{padding:38px 30px 28px}
+.cert-lbl{font-size:12px;letter-spacing:4px;color:var(--teal);font-weight:800;text-transform:uppercase;opacity:.8}
+.cert-to{margin-top:14px;font-size:13px;color:#666}
+.cert-name{font-size:44px;font-weight:900;color:var(--teal);margin:14px 0;font-family:Georgia,serif;word-break:break-word}
+.cert-line{width:150px;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:16px auto}
+.cert-text{font-size:15px;color:var(--teal);line-height:1.7}
+.cert-text strong{color:#9a7a16}
+.cert-date{margin-top:16px;font-size:12px;color:#888;font-weight:700;letter-spacing:1px;text-transform:uppercase}
+.cert-foot2{background:linear-gradient(180deg,#f8f9fa,#eef2f5);border-top:2px solid var(--gold);padding:22px}
+.cert-foot2 .sig{font-family:Georgia,serif;font-size:26px;color:var(--teal);font-weight:700}
+.cert-foot2 .sigrole{font-size:10px;letter-spacing:2px;color:#9a7a16;font-weight:800;text-transform:uppercase;margin-top:4px}
+#certActions{display:flex;gap:10px}
+@media(max-width:480px){.cert-name{font-size:32px}}
+
 /* ===== MINI CALENDAR POPUP ===== */
 .calpop{position:fixed;z-index:6000;background:#fff;border-radius:16px;box-shadow:0 15px 50px rgba(0,0,0,.3);border:2px solid var(--pink-light);padding:12px;display:none;width:252px}
 .cp-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
@@ -215,7 +263,37 @@ tr.month-head td{background:linear-gradient(135deg,var(--pink-dark),var(--pink))
 .cp-d.sel{background:var(--pink);color:#fff;font-weight:900}
 .cp-foot{display:flex;justify-content:space-between;margin-top:10px}
 .cp-foot button{width:auto;padding:5px 14px;font-size:11px;font-weight:800;border:none;border-radius:10px;cursor:pointer;background:linear-gradient(135deg,var(--pink),var(--pink-light));color:#fff}
+/* ===== PRICE LIST: add/delete buttons ===== */
+.price-del{background:none;border:none;color:#ffb3cd;cursor:pointer;font-size:12px;transition:.2s;padding:2px 4px}
+.price-del:hover{color:var(--danger);transform:scale(1.25)}
+.h3btn{width:26px;height:26px;border-radius:8px;border:1px solid rgba(255,79,163,.35);background:linear-gradient(135deg,var(--pink),var(--pink-light));color:#fff;cursor:pointer;font-size:11px;transition:.2s;display:inline-flex;align-items:center;justify-content:center}
+.h3btn:hover{transform:translateY(-1px);box-shadow:0 3px 10px rgba(255,79,163,.4)}
+/* ===== PRICE POSTER ===== */
+.poster-overlay{position:fixed;inset:0;background:rgba(60,10,35,.6);backdrop-filter:blur(8px);z-index:7200;display:none;align-items:center;justify-content:center;padding:16px;flex-direction:column;gap:14px}
+.poster-overlay.show{display:flex}
+.poster{width:min(560px,92vw);background:linear-gradient(160deg,#fff,#fff5fa);border-radius:24px;overflow:hidden;box-shadow:0 25px 80px rgba(0,0,0,.4);border:3px solid var(--pink-light)}
+.poster-head{background:linear-gradient(135deg,var(--pink),var(--pink-light) 60%,var(--pink-pale));padding:26px 24px;text-align:center}
+.poster-head img{height:56px;border-radius:12px;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+.poster-head h2{color:#fff;font-size:24px;letter-spacing:3px;margin-top:10px;text-transform:uppercase}
+.poster-head p{color:rgba(255,255,255,.92);font-size:12px;letter-spacing:2px;text-transform:uppercase;margin-top:4px}
+.poster-promo{margin:14px 18px 0;background:linear-gradient(135deg,#fff8e1,#ffecb3);border:2px solid var(--gold);color:#8a6d00;font-weight:900;border-radius:14px;padding:10px 14px;text-align:center;font-size:14px}
+.poster-body{padding:18px 22px 8px}
+.pp-row{display:flex;justify-content:space-between;align-items:center;padding:11px 6px;border-bottom:2px dashed #ffd6e8}
+.pp-row:last-child{border-bottom:none}
+.pp-name{font-weight:900;color:var(--pink-dark);font-size:17px;letter-spacing:1px;text-transform:uppercase}
+.pp-price{font-weight:900;font-size:17px;color:var(--teal)}
+.pp-price s{color:#c98aa9;font-weight:700;margin-right:8px;font-size:14px}
+.pp-price b.pp-promo{color:#b8860b}
+.poster-foot{background:linear-gradient(135deg,var(--pink-dark),var(--pink));color:#fff;text-align:center;padding:14px;font-size:12px;letter-spacing:1.5px;font-weight:800;text-transform:uppercase}
+.poster-foot small{display:block;margin-top:4px;opacity:.85;letter-spacing:.5px;text-transform:none;font-weight:600}
+.poster-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+/* ===== QUOTA TOP CUSTOMER ===== */
+.quota-top{display:flex;justify-content:space-between;align-items:center;gap:10px;background:linear-gradient(135deg,#fff8e1,#fffdf2);border:2px solid var(--gold);border-radius:16px;padding:14px 16px;margin-bottom:14px;flex-wrap:wrap;box-shadow:0 6px 20px rgba(212,175,55,.25)}
 </style>
+<base target="_blank">
+<base target="_blank">
+<base target="_blank">
+<base target="_blank">
 <base target="_blank">
 <base target="_blank">
 <base target="_blank">
@@ -224,14 +302,17 @@ tr.month-head td{background:linear-gradient(135deg,var(--pink-dark),var(--pink))
 <base target="_blank">
 </head>
 <body>
+<audio id="coffeeAudio" loop><source src="coffee.mp3" type="audio/mpeg"></audio>
 <header>
-  <h1><img src="adminlogo.png" alt="DGC" style="height:38px;width:auto;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,0.25);" onerror="this.style.display='none'"> <i class="fas fa-star"></i> Starlight Monitor <span class="sub">— Client Database & Gifting Tracker v2 · Firebase Live Sync ☁️</span></h1>
+  <h1><img src="adminlogo.png" alt="DGC" style="height:38px;width:auto;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,0.25);" onerror="this.style.display='none'"> <span class="motto" id="motto" style="font-size:14px;font-style:italic;font-weight:600;"><i class="fas fa-star"></i> Starlight Monitor</span></h1>
   <div class="hbtns">
     <button class="txtbtn" onclick="addRow()" title="Add row"><i class="fas fa-plus"></i> Add Row</button>
     <button class="txtbtn" onclick="exportExcel()" title="Export to Excel"><i class="fas fa-file-excel"></i> Excel</button>
     <button class="txtbtn" onclick="resetAll()" title="Reset all data" style="background:rgba(255,71,87,.35)"><i class="fas fa-trash"></i></button>
     <button id="syncBtn" onclick="saveAll(true)" title="Sync status"><i class="fas fa-cloud"></i></button>
     <button onclick="saveAll(true)" title="Save (auto-saves too)"><i class="fas fa-save"></i></button>
+    <button id="quotaBtn" onclick="openQuotaModal()" title="Starlight Quota — 13 orders = 1 FREE"><i class="fas fa-bullseye"></i><span class="qbadge" id="quotaBadge" style="display:none;">0</span></button>
+    <button id="musicBtn" onclick="toggleMusic()" title="Play Music"><i class="fas fa-music"></i></button>
   </div>
 </header>
 <div class="wrap">
@@ -247,16 +328,17 @@ tr.month-head td{background:linear-gradient(135deg,var(--pink-dark),var(--pink))
     </div>
   </div>
   <div class="card">
-    <h3><i class="fas fa-tag"></i> Item Price List <small style="font-weight:600;text-transform:none;color:var(--pink-light)">(editable)</small></h3>
+    <h3 style="flex-wrap:wrap;gap:6px"><span><i class="fas fa-tag"></i> Item Price List <small style="font-weight:600;text-transform:none;color:var(--pink-light)">(editable)</small></span><span style="display:flex;gap:6px;margin-left:auto"><button class="h3btn" onclick="addItem()" title="Add item ⭕"><i class="fas fa-plus"></i></button><button class="h3btn" onclick="openPoster()" title="Generate Price List Poster 🖼 (auto kasama promo/discount)"><i class="fas fa-image"></i></button></span></h3>
     <table class="mini">
-      <tr><th>Item</th><th>Cost</th><th>Price</th><th style="text-align:center">Stocks</th></tr>
+      <tr><th>Item</th><th>Cost</th><th>Price</th><th style="width:26px"></th></tr>
       <tbody id="priceBody"></tbody>
     </table>
+    <div style="margin-top:8px;text-align:right"><button class="btn btn-s" style="padding:6px 12px;font-size:11px" onclick="addItem()"><i class="fas fa-plus"></i> Add Item</button></div>
   </div>
   <div class="card">
     <h3><i class="fas fa-cubes"></i> Stocks</h3>
     <div class="bigstat" style="margin-top:14px"><div class="num" id="stockTotal">0</div><div class="lbl">NSL Available Stocks</div></div>
-    <div style="font-size:11px;color:var(--pink-light);text-align:center;margin-top:6px">Auto-computed: Base + rows na may 🎁 stock</div>
+    <div style="font-size:11px;color:var(--pink-light);text-align:center;margin-top:6px">Auto-computed: LAHAT ng rows/accounts (all months) — NSL count; nawawala kapag naka-check ang Followed ✓</div>
   </div>
   <div class="card">
     <h3><i class="fas fa-wallet"></i> Income</h3>
@@ -298,7 +380,7 @@ tr.month-head td{background:linear-gradient(135deg,var(--pink-dark),var(--pink))
         <th rowspan="2">#</th>
         <th rowspan="2">Customer</th>
         <th colspan="2" class="grp">Checklist</th>
-        <th colspan="9" class="grp">Gifter <span style="font-weight:600">(3 customers = 1 account)</span></th>
+        <th colspan="10" class="grp">Gifter <span style="font-weight:600">(3 customers = 1 account)</span></th>
         <th colspan="3" class="grp">Client</th>
         <th colspan="5" class="grp">Schedule</th>
         <th rowspan="2">Payment</th>
@@ -306,10 +388,10 @@ tr.month-head td{background:linear-gradient(135deg,var(--pink-dark),var(--pink))
         <th rowspan="2"></th>
       </tr>
       <tr>
-        <th class="grp">Draw</th><th class="grp">Collect</th>
+        <th class="grp">Draw <button class="chkall-btn" onclick="toggleCheckAll('draw')" title="Tap: uncheck all · tap ulit: check all"><i class="fas fa-check-double"></i></button></th><th class="grp">Collect <button class="chkall-btn" onclick="toggleCheckAll('collect')" title="Tap: uncheck all · tap ulit: check all"><i class="fas fa-check-double"></i></button></th>
         <th class="grp">🎁<br>NSL</th><th class="grp">Orders<br><span style="font-weight:600">(Followed−NSL)</span></th>
         <th class="grp">Gmail</th><th class="grp">IGN / Account</th><th class="grp">ID</th><th class="grp">Server</th>
-        <th class="grp">💎 Current<br><span style="font-weight:600">(editable)</span></th><th class="grp">Current<br>WDP</th><th class="grp">WDP Need<br><span style="font-weight:600">(CurWDP−10)</span></th>
+        <th class="grp">Start<br>💎</th><th class="grp">WDP<br>Days</th><th class="grp">TODAY<br>💎</th><th class="grp">WDP Need<br><span style="font-weight:600">(Days÷7−9)</span></th>
         <th class="grp">IGN</th><th class="grp">MLID</th><th class="grp">ML Server</th>
         <th class="grp">Followed ✓</th><th class="grp">Date Ordered</th><th class="grp">Expect<br>(+8d)</th><th class="grp">Delivery<br>(−1d)</th><th class="grp">Days</th>
       </tr>
@@ -320,7 +402,7 @@ tr.month-head td{background:linear-gradient(135deg,var(--pink-dark),var(--pink))
 <div class="addbar">
   <button class="btn btn-p" onclick="addRow()"><i class="fas fa-plus"></i> Add Row</button>
   <button class="btn btn-t" onclick="exportExcel()"><i class="fas fa-file-excel"></i> Export to Excel</button>
-  <span style="font-size:12px;color:var(--pink-light)"><i class="fas fa-info-circle"></i> Auto-saves sa browser. Click Date Ordered = calendar popup — TAP LANG para pumili ng date 🗓 (naka-word format pa rin, e.g. DEC 21). Delivery today = green, kahapon/overdue = red. Done = COMPLETED badge.</span>
+  <span style="font-size:12px;color:var(--pink-light)"><i class="fas fa-info-circle"></i> Auto-saves sa browser. Click Date Ordered = calendar popup — TAP LANG para pumili ng date 🗓 (naka-word format pa rin, e.g. DEC 21). Delivery today = green, kahapon/overdue = red. Done = COMPLETED badge. 📱 Long-press + drag = i-scroll ang table pahilis/pahaba.</span>
 </div>
 <div class="legend">
   <span><i class="dot" style="background:#d9f7e5;border:1px solid #0b6b3a"></i> Date today (green)</span>
@@ -328,12 +410,51 @@ tr.month-head td{background:linear-gradient(135deg,var(--pink-dark),var(--pink))
   <span><i class="dot" style="background:#c8f7d8"></i> COMPLETED badge</span>
   <span><i class="dot" style="background:linear-gradient(90deg,var(--pink-pale),var(--pink-light));width:26px"></i> Divider every 3 customers</span>
   <span><i class="fas fa-hand-pointer" style="color:var(--pink)"></i> Click IGN/account = copy</span>
+  <span><i class="fas fa-grip-lines" style="color:var(--pink)"></i> Drag row = reorder</span>
   <span><i class="fas fa-envelope" style="color:var(--pink)"></i> Click Gmail = copy + ID + Server</span>
 </div>
 </div>
 
 <!-- MINI CALENDAR POPUP -->
 <div class="calpop" id="calPop"></div>
+
+<!-- ===== QUOTA MODAL ===== -->
+<div class="quota-overlay" id="quotaModal" onclick="if(event.target===this)closeQuotaModal()">
+  <div class="quota-box" onclick="event.stopPropagation()">
+    <div class="quota-head"><h3><i class="fas fa-bullseye"></i> Starlight Quota — 13 Orders = 1 FREE</h3><button onclick="closeQuotaModal()"><i class="fas fa-times"></i></button></div>
+    <div class="quota-body">
+      <div id="quotaTop"></div>
+      <div id="quotaList"></div>
+      <small style="display:block;margin-top:8px;color:var(--pink-light);line-height:1.5;"><i class="fas fa-info-circle"></i> Bawat row na may customer name = 1 Starlight order. Pwede nang mag-multiple (26 = 2 FREE, atbp.). Ang name ay mawawala lang dito kapag na-claim na ang prize.</small>
+    </div>
+  </div>
+</div>
+<!-- ===== CERTIFICATE MODAL ===== -->
+<div class="cert-overlay" id="certOverlay">
+  <div class="cert-modal" id="certModal">
+    <div class="cert-inner-border"></div>
+    <div class="cert-head2"><img src="adminlogo.png" alt="DGC" onerror="this.style.display='none'"><h2 id="certTitle">Starlight Quota Achiever</h2><p id="certTag">DGC eStore · Buy 13, Get 1 FREE</p></div>
+    <div class="cert-mid">
+      <div class="cert-lbl">Certificate of Achievement</div>
+      <div class="cert-to">This certificate is proudly presented to</div>
+      <div class="cert-name" id="certName">Customer</div>
+      <div class="cert-line"></div>
+      <div class="cert-text" id="certSub"></div>
+      <div class="cert-date" id="certDate"></div>
+    </div>
+    <div class="cert-foot2"><div class="sig">Reinayanne</div><div class="sigrole">DGC eStore Founder</div></div>
+  </div>
+  <div id="certActions"><button class="btn btn-t" onclick="downloadCert()"><i class="fas fa-download"></i> Download Certificate</button><button class="btn btn-s" onclick="closeCert()">Close</button></div>
+</div>
+
+<div class="poster-overlay" id="posterOverlay" onclick="if(event.target===this)closePoster()">
+  <div class="poster" id="posterCard"></div>
+  <div class="poster-actions" id="posterActions">
+    <button class="btn btn-t" onclick="downloadPoster()"><i class="fas fa-download"></i> Download Poster</button>
+    <button class="btn btn-s" onclick="refreshPoster()"><i class="fas fa-sync"></i> Refresh</button>
+    <button class="btn btn-s" onclick="closePoster()">Close</button>
+  </div>
+</div>
 <div class="toast" id="toast"><i class="fas fa-check-circle"></i><div><h4>Saved!</h4><p id="toastMsg">Data updated</p></div></div>
 
 <script>
@@ -421,7 +542,7 @@ function defaultState(){
 function seedRows(){ const r=[]; for(let i=1;i<=12;i++) r.push(blankRow(i)); return r; }
 /* NOTE: account field nasa gIGN (Gifter IGN). Walang PSL column. 3 customers = 1 gifter account (merged). */
 function blankRow(n){
-  return {n,customer:'',giftNSL:0, draw:false,collect:false, gGmail:'',gIGN:'DGC ESTORE '+(Math.floor((n-1)/3)%6+1),gID:'',gServer:'', curDias:0,curWdp:0, cIGN:'',cMLID:'',cMLServer:'', followed:false,ordered:'', payment:'Unpaid',note:'',done:false};
+  return {n,customer:'',giftNSL:0, draw:false,collect:false, gGmail:'',gIGN:'DGC ESTORE '+(Math.floor((n-1)/3)%6+1),gID:'',gServer:'', curDias:0,curWdp:0,gWdpDays:0, cIGN:'',cMLID:'',cMLServer:'', followed:false,ordered:'', payment:'Unpaid',note:'',done:false};
 }
 function migrate(st){
   /* migrate: old account -> gIGN, remove giftPSL */
@@ -431,6 +552,7 @@ function migrate(st){
     st.months=[{name:currentMonthName(),collapsed:false,rows:st.rows||[]}];
   }
   delete st.rows;
+  st.quotaClaims=st.quotaClaims||{};
   /* FIX: normalize Date Ordered -> ISO (old saved "DEC 21" values broke the calendar) */
   st.months.forEach(mo=>(mo.rows||[]).forEach(r=>{ if(r.ordered){ r.ordered=parseDateInput(r.ordered); } }));
   return st;
@@ -468,7 +590,7 @@ function parseDateInput(v){
 function fmtDate(ds){ if(!ds) return ''; const d=new Date(ds+'T00:00:00'); if(isNaN(d)) return ''; return MON[d.getMonth()]+' '+String(d.getDate()).padStart(2,'0'); }
 function addDays(ds,days){if(!ds)return '';const dt=new Date(ds+'T00:00:00');dt.setDate(dt.getDate()+days);return dt.toISOString().slice(0,10)}
 /* EXPECT = ordered + 8 days ; DELIVERY = expect - 1 day (= ordered + 7) */
-function datesOf(r){const expect=addDays(r.ordered,8);return{expect,delivery:addDays(expect,-1)}}
+function datesOf(r){const expect=addDays(r.ordered,8);return{expect,delivery:addDays(r.ordered,7)}}
 function daysLeft(d){if(!d)return null;return Math.ceil((new Date(d+'T00:00:00')-new Date(todayStr()+'T00:00:00'))/86400000)}
 function daysBetween(a,b){if(!a||!b)return null;return Math.round((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/86400000)}
 /* EXPECT/DELIVERY cell class: today = green, kahapon (or overdue) = red */
@@ -498,7 +620,7 @@ function renderPrices(){
       <td style="font-weight:800"><input value="${esc(it.name)}" onchange="updItem(${i},'name',this.value)"></td>
       <td><input type="number" value="${it.cost}" onchange="updItem(${i},'cost',this.value)"></td>
       <td class="price"><input type="number" value="${it.price}" onchange="updItem(${i},'price',this.value)"></td>
-      <td style="text-align:center"><input type="number" style="text-align:center;font-weight:800;color:var(--teal)" value="${it.base}" title="Base stocks" onchange="updItem(${i},'base',this.value)"></td>
+      <td style="text-align:center"><button class="price-del" onclick="delItem(${i})" title="Delete item"><i class="fas fa-trash"></i></button></td>
     </tr>`).join('');
   const pr=state.promo;
   $('promoSwitch').classList.toggle('on',pr.on);
@@ -528,9 +650,11 @@ function wdpTotals(){
 /* Lahat ng gifter fields merged sa group: NSL, Orders, Gmail, IGN, ID, Server, Current 💎, Current WDP.
    WDP Need = Current WDP − 10 (per request). */
 function groupStats(grp){
-  let nsl=0,orders=0,curDias=0,curWdp=0;
-  grp.forEach(r=>{ nsl+=(+r.giftNSL||0); orders+=ordersOf(r); curDias+=(+r.curDias||0); curWdp+=(+r.curWdp||0); });
-  return {nsl,orders,curDias,curWdp,wdpNeed:curWdp-10};
+  let nsl=0,orders=0,curDias=0,curWdp=0,wdpDays=0;
+  grp.forEach(r=>{ nsl+=(+r.giftNSL||0); orders+=ordersOf(r); curDias+=(+r.curDias||0); curWdp+=(+r.curWdp||0); wdpDays+=(+r.gWdpDays||0); });
+  const todayDias=curDias+wdpDays*20;                 /* TODAY 💎 = Start 💎 + (WDP Days × 20) */
+  const wdpNeed=Math.round((wdpDays/7-9)*100)/100;    /* WDP Need = WDP Days ÷ 7 − 9 */
+  return {nsl,orders,curDias,curWdp,wdpDays,todayDias,wdpNeed};
 }
 
 /* ================= ACCOUNTS (BASIS: may customer name = used na yung slot; 3 customers = 1 use) ================= */
@@ -581,7 +705,7 @@ function renameAccount(i){
 
 /* group updates: propagate value to ALL rows ng group (3 customers = 1 account) */
 function updGroupField(m,idxs,f,v){
-  idxs.split(',').forEach(x=>{ state.months[m].rows[+x][f]=(f==='curDias'||f==='curWdp')?(parseFloat(v)||0):v; });
+  idxs.split(',').forEach(x=>{ state.months[m].rows[+x][f]=(['curDias','curWdp','gWdpDays'].includes(f))?(parseFloat(v)||0):v; });
   saveAll(); renderTable(); recalc();
 }
 /* NSL: value nasa FIRST row lang ng group (para hindi mag-double ang sum) */
@@ -621,15 +745,22 @@ Thank You. Happy Gaming 😊`;
 /* ================= CALC & RENDER ================= */
 function compute(){
   const rows=allRows(); /* lahat ng months — cumulative stocks/income/chips */
-  let addNSL=0,incNSL=0;
   const done=rows.filter(r=>r.done);
-  done.forEach(r=>{incNSL+=(r.giftNSL||0)});
-  rows.forEach(r=>{addNSL+=(+r.giftNSL||0)});
   const nslIt=state.items.find(i=>i.name==='NSL');
   const pNSL=promoPrice(nslIt?nslIt.price:179);
-  const stockNSL=(nslIt?nslIt.base:0)+addNSL;
+  /* INCOME = bilang ng COMPLETED rows (may customer) × NSL price (kasama promo) */
+  const incNSL=done.filter(r=>(r.customer||'').trim()).length*pNSL;
+  /* STOCKS = LAHAT ng accounts/rows (all months) — kung ilan ang NSL ng row/group, ganun din ang idadagdag.
+     Nawawala lang sa stocks kapag naka-check ang Followed ✓ (ma-mi-minus). */
+  let stockNSL=0;
+  state.months.forEach(mo=>{
+    for(let g=0;g<mo.rows.length;g+=3){
+      const grp=mo.rows.slice(g,g+3);
+      if(grp.some(r=>(r.customer||'').trim()&&!r.followed)) stockNSL+=groupStats(grp).nsl;
+    }
+  });
   const w=wdpTotals();
-  return {stockNSL,incNSL:incNSL*pNSL, cntDone:done.length, paid:rows.filter(r=>r.payment==='Paid').length,unpaid:rows.filter(r=>r.payment==='Unpaid').length, totalOrders:rows.reduce((s,r)=>s+Math.max(0,ordersOf(r)),0),wdpNeed:w.need};
+  return {stockNSL,incNSL, cntDone:done.length, paid:rows.filter(r=>r.payment==='Paid').length,unpaid:rows.filter(r=>r.payment==='Unpaid').length, totalOrders:rows.reduce((s,r)=>s+Math.max(0,ordersOf(r)),0),wdpNeed:w.need};
 }
 function recalc(){
   const c=compute();
@@ -642,7 +773,7 @@ function recalc(){
     <div class="chip"><i class="fas fa-gem" style="color:var(--purple)"></i> WDP need <b>${c.wdpNeed}</b></div>
     <div class="chip"><i class="fas fa-money-bill-wave" style="color:var(--success)"></i> Paid <b>${c.paid}</b></div>
     <div class="chip"><i class="fas fa-exclamation-circle" style="color:var(--danger)"></i> Unpaid <b>${c.unpaid}</b></div>`;
-  renderCalendar(); renderAccounts();
+  renderCalendar(); renderAccounts(); renderQuotaBadge();
 }
 
 /* ================= CALENDAR (top card) ================= */
@@ -743,12 +874,13 @@ function rowHTML(r,m,i,merged){
       </td>
       <td rowspan="${sp}" class="keepcell"><input type="text" style="min-width:60px" value="${esc(r.gID)}" placeholder="ID" onchange="updGroupField(${m},'${ix}','gID',this.value)"></td>
       <td rowspan="${sp}" class="keepcell"><input type="text" style="min-width:70px" value="${esc(r.gServer)}" placeholder="Server" onchange="updGroupField(${m},'${ix}','gServer',this.value)"></td>
-      <td class="keepcell" rowspan="${sp}" title="Current Diamonds — editable"><input type="number" style="min-width:74px;font-weight:900;color:var(--purple);text-align:center" value="${g.curDias}" onchange="updGroupField(${m},'${ix}','curDias',this.value)"></td>
-      <td class="keepcell" rowspan="${sp}" title="Current WDP — editable"><input type="number" style="min-width:64px;font-weight:900;color:var(--info);text-align:center" value="${g.curWdp}" onchange="updGroupField(${m},'${ix}','curWdp',this.value)"></td>
-      <td class="keepcell" rowspan="${sp}" style="font-weight:900;color:var(--purple);font-size:13px" title="WDP Needed = Current WDP − 10">${g.wdpNeed}</td>`;
+      <td class="keepcell" rowspan="${sp}" title="Start Diamonds — editable"><input type="number" style="min-width:74px;font-weight:900;color:var(--purple);text-align:center" value="${g.curDias}" onchange="updGroupField(${m},'${ix}','curDias',this.value)"></td>
+      <td class="keepcell" rowspan="${sp}" title="WDP Days — editable (ilang araw nang naka-WDP)"><input type="number" style="min-width:60px;font-weight:900;color:var(--info);text-align:center" value="${g.wdpDays}" onchange="updGroupField(${m},'${ix}','gWdpDays',this.value)"></td>
+      <td class="keepcell" rowspan="${sp}" style="font-weight:900;color:var(--purple);font-size:13px" title="TODAY 💎 = Start 💎 + (WDP Days × 20)">${g.todayDias}</td>
+      <td class="keepcell" rowspan="${sp}" style="font-weight:900;color:var(--teal);font-size:13px" title="WDP Need = WDP Days ÷ 7 − 9">${g.wdpNeed}</td>`;
   }
 
-  return `<tr class="${trCls}">
+  return `<tr class="${trCls}" draggable="true" ondragstart="dragStart(event,${m},${i})" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="dropRow(event,${m},${i});this.classList.remove('drag-over')" title="Drag to reorder 📦">
     <td style="font-weight:900;color:var(--pink)">${r.n}</td>
     <td class="custcell"><input type="text" value="${esc(r.customer)}" placeholder="Customer name..." onchange="updRow(${m},${i},'customer',this.value)"></td>
     ${chk('draw')}${chk('collect')}
@@ -807,7 +939,7 @@ function renderTable(){
     const used=mo.rows.filter(r=>(r.customer||'').trim()).length;
     const hid=mo.collapsed&&!q;
     h+=`<tr class="month-head">
-      <td colspan="24">
+      <td colspan="25">
         <div class="mh-inner">
           <button class="mh-toggle" onclick="toggleMonth(${m})" title="${hid?'Show':'Hide'} month"><i class="fas fa-chevron-${hid?'right':'down'}"></i></button>
           <b class="mh-name" onclick="renameMonth(${m})" title="Click to rename ✏">${esc(mo.name)}</b>
@@ -829,11 +961,11 @@ function renderTable(){
         h+=rowHTML(r,m,idxs[k],k===0?{stats,span:grp.length,idxs:idxs.join(',')}:null);
       });
       /* divider after every 3 customers */
-      if(g+3<rows.length) h+='<tr class="divider"><td colspan="24"></td></tr>';
+      if(g+3<rows.length) h+='<tr class="divider"><td colspan="25"></td></tr>';
     }
   });
   if(!h){
-    $('tblBody').innerHTML='<tr><td colspan="24" style="padding:40px;text-align:center;color:var(--pink-light)"><i class="fas fa-inbox"></i> Walang match — add a row!</td></tr>';
+    $('tblBody').innerHTML='<tr><td colspan="25" style="padding:40px;text-align:center;color:var(--pink-light)"><i class="fas fa-inbox"></i> Walang match — add a row!</td></tr>';
     return;
   }
   $('tblBody').innerHTML=h;
@@ -858,14 +990,14 @@ function delRow(m,i){ if(!confirm('Delete row #'+state.months[m].rows[i].n+'?'))
 
 /* ================= EXPORT ================= */
 function exportExcel(){
-  const head=['Month','#','Customer','Draw','Collect','Gift NSL','Orders','Gifter Gmail','Gifter IGN/Account','Gifter ID','Gifter Server','Current Diamonds','Current WDP','WDP Needed (CurWDP-10)','Client IGN','MLID','ML Server','Followed','Date Ordered','Expect(+8d)','Delivery(-1d)','Days','Payment','Done'];
+  const head=['Month','#','Customer','Draw','Collect','Gift NSL','Orders','Gifter Gmail','Gifter IGN/Account','Gifter ID','Gifter Server','Start Diamonds','WDP Days','TODAY Diamonds','WDP Need (Days÷7−9)','Client IGN','MLID','ML Server','Followed','Date Ordered','Expect(+8d)','Delivery(-1d)','Days','Payment','Done'];
   const data=[];
   state.months.forEach(mo=>{
     mo.rows.forEach((r,idx)=>{
       const{expect,delivery}=datesOf(r);const days=daysBetween(r.ordered,delivery);
-      const k=idx%3;let nsl='',orders='',cd='',cw='',wn='';
-      if(k===0){const st=groupStats(mo.rows.slice(idx,idx+3));nsl=st.nsl;orders=st.orders;cd=st.curDias;cw=st.curWdp;wn=st.wdpNeed;}
-      data.push([mo.name,r.n,r.customer,r.draw?'✓':'',r.collect?'✓':'',nsl,orders,k===0?r.gGmail:'',k===0?r.gIGN:'',r.gID,r.gServer,cd,cw,wn,r.cIGN,r.cMLID,r.cMLServer,r.followed?'✓':'',fmtDate(r.ordered),fmtDate(expect),fmtDate(delivery),days===null?'':days,r.payment,r.done?'COMPLETED':'']);
+      const k=idx%3;let nsl='',orders='',cd='',cw='',td='',wn='';
+      if(k===0){const st=groupStats(mo.rows.slice(idx,idx+3));nsl=st.nsl;orders=st.orders;cd=st.curDias;cw=st.wdpDays;td=st.todayDias;wn=st.wdpNeed;}
+      data.push([mo.name,r.n,r.customer,r.draw?'✓':'',r.collect?'✓':'',nsl,orders,k===0?r.gGmail:'',k===0?r.gIGN:'',r.gID,r.gServer,cd,cw,td,wn,r.cIGN,r.cMLID,r.cMLServer,r.followed?'✓':'',fmtDate(r.ordered),fmtDate(expect),fmtDate(delivery),days===null?'':days,r.payment,r.done?'COMPLETED':'']);
     });
   });
   data.unshift(head);
@@ -982,8 +1114,221 @@ function startStarlightOrderSync(){
   }).catch(()=>{});
 }
 
+/* ================= DAILY MOTTO (same vibe as Manager Julie) ================= */
+const mottos=[
+  ['fas fa-bolt','Alam kong kaya mo yan Julie, Magiging Successful ka'],
+  ['fas fa-crown','You are a beautiful QUEEN JULIE'],
+  ['fas fa-money-bill-wave','Yayaman ka Julie'],
+  ['fas fa-heart','I Love you Julie']
+];
+
+/* ================= CHECKLIST: uncheck all / check all per column ================= */
+function toggleCheckAll(f){
+  const rows=activeRows();
+  if(!rows.length){showToast('Walang rows sa active month');return;}
+  const allChecked=rows.every(r=>r[f]);
+  rows.forEach(r=>r[f]=!allChecked);
+  saveAll(false);renderTable();recalc();
+  showToast((allChecked?'Unchecked':'Checked')+' LAHAT ng '+f+' ✓');
+}
+
+/* ================= DRAG & DROP ROW REORDER ================= */
+let dragSrc=null;
+function dragStart(e,m,i){
+  dragSrc={m,i};
+  e.dataTransfer.effectAllowed='move';
+  try{e.dataTransfer.setData('text/plain','');}catch(_){}
+  const tr=e.target.closest('tr');if(tr)tr.classList.add('dragging');
+}
+function dropRow(e,m,i){
+  e.preventDefault();
+  if(!dragSrc)return;
+  const s=dragSrc;dragSrc=null;
+  document.querySelectorAll('tr.dragging').forEach(t=>t.classList.remove('dragging'));
+  if(s.m!==m)return; /* same month lang pwede i-drag */
+  const rows=state.months[m].rows;
+  if(s.i===i)return;
+  const moved=rows.splice(s.i,1)[0];
+  rows.splice(i,0,moved);
+  rows.forEach((r,x)=>r.n=x+1);
+  saveAll(false);renderTable();recalc();
+  showToast('Row #'+moved.n+' moved 📦');
+}
+document.addEventListener('dragend',()=>{dragSrc=null;document.querySelectorAll('tr.dragging').forEach(t=>t.classList.remove('dragging'));});
+
+/* ================= MUSIC (coffee.mp3) ================= */
+let musicPlaying=false;
+function toggleMusic(){
+  const a=$('coffeeAudio');if(!a)return;
+  if(musicPlaying){a.pause();musicPlaying=false;$('musicBtn').classList.remove('playing');showToast('🎵 Music paused');}
+  else{a.volume=.5;a.play().then(()=>{musicPlaying=true;$('musicBtn').classList.add('playing');showToast('🎵 Now playing: Coffee.mp3');}).catch(()=>showToast('❌ Could not play coffee.mp3'));}
+}
+
+/* ================= STARLIGHT QUOTA — 13 orders = 1 FREE ================= */
+const QUOTA_TARGET=13;
+function customerStarlightCounts(){
+  const map={};
+  allRows().forEach(r=>{const c=(r.customer||'').trim();if(!c)return;map[c]=(map[c]||0)+1;});
+  return map;
+}
+function quotaPending(name,count){
+  state.quotaClaims=state.quotaClaims||{};
+  const earned=Math.floor((count||0)/QUOTA_TARGET);
+  return Math.max(0,earned-(state.quotaClaims[name]||0));
+}
+function renderQuotaBadge(){
+  const counts=customerStarlightCounts();
+  const total=Object.keys(counts).reduce((s,n)=>s+quotaPending(n,counts[n]),0);
+  const b=$('quotaBadge');if(!b)return;
+  b.textContent=total;b.style.display=total>0?'flex':'none';
+}
+function openQuotaModal(){
+  state.quotaClaims=state.quotaClaims||{};
+  renderQuotaModal();
+  $('quotaModal').classList.add('show');
+}
+function closeQuotaModal(){$('quotaModal').classList.remove('show');}
+function renderQuotaModal(){
+  const counts=customerStarlightCounts();
+  const rows=Object.keys(counts).sort((a,b)=>counts[b]-counts[a]||a.localeCompare(b));
+  /* 👑 TOP STARLIGHT CUSTOMER — pinakamaraming NSL/Starlight purchases, may certificate din */
+  const topEl=$('quotaTop');
+  if(rows.length){
+    const tn=rows[0],tc=counts[tn];
+    const encT=encodeURIComponent(tn).replace(/'/g,'%27');
+    topEl.innerHTML=`<div class="quota-top">
+      <div style="display:flex;align-items:center;gap:12px;min-width:0"><i class="fas fa-crown" style="font-size:26px;color:var(--gold)"></i>
+      <div><strong style="color:var(--pink);font-size:15px;">${esc(tn)}</strong><br>
+      <small style="color:var(--pink-light);">👑 TOP STARLIGHT CUSTOMER · <b style="color:var(--teal);">${tc} NSL/Starlight purchase${tc>1?'s':''}</b></small></div></div>
+      <button class="btn btn-p" style="padding:9px 16px;font-size:12px" onclick="showTopCertificate(decodeURIComponent('${encT}'),${tc})"><i class="fas fa-award"></i> Certificate 🏅</button>
+    </div>`;
+  } else { topEl.innerHTML=''; }
+  const pendingRows=rows.filter(n=>quotaPending(n,counts[n])>0);
+  if(!pendingRows.length){
+    $('quotaList').innerHTML='<div style="text-align:center;padding:30px;color:var(--pink-light);font-style:italic;"><i class="fas fa-bullseye" style="font-size:34px;display:block;margin-bottom:10px;color:var(--gold);"></i>Walang pending na FREE Starlight.<br><small>Kapag umabot ang customer ng 13 Starlight orders, lalabas dito ang name nila — mawawala lang kapag na-claim na.</small></div>';
+    return;
+  }
+  $('quotaList').innerHTML=pendingRows.map(n=>{
+    const cnt=counts[n],earned=Math.floor(cnt/QUOTA_TARGET),cl=state.quotaClaims[n]||0,p=quotaPending(n,cnt);
+    const enc=encodeURIComponent(n).replace(/'/g,'%27');
+    return `<div class="quota-item2">
+      <div><strong style="color:var(--pink);font-size:14px;">${esc(n)}</strong><br>
+      <small style="color:var(--pink-light);">${cnt} NSL/Starlight purchase${cnt>1?'s':''} · ${earned} quota earned · ${cl} claimed · <b style="color:var(--success);">${p} pending FREE</b></small></div>
+      <button class="btn btn-t" style="padding:9px 16px;font-size:12px;" onclick="claimQuota(decodeURIComponent('${enc}'))"><i class="fas fa-award"></i> Claim + Certificate</button>
+    </div>`;
+  }).join('');
+}
+function claimQuota(name){
+  const counts=customerStarlightCounts();
+  const pending=quotaPending(name,counts[name]);
+  if(pending<=0){showToast('Walang pending quota para kay '+name);return;}
+  state.quotaClaims[name]=(state.quotaClaims[name]||0)+1;
+  saveAll(false);
+  renderQuotaModal();renderQuotaBadge();
+  showQuotaCertificate(name,state.quotaClaims[name]);
+}
+function showQuotaCertificate(name,cycle){
+  $('certTitle').textContent='Starlight Quota Achiever';
+  $('certTag').textContent='DGC eStore · Buy 13, Get 1 FREE';
+  $('certName').textContent=name;
+  $('certSub').innerHTML=`For completing <strong>${QUOTA_TARGET} Starlight Orders</strong> — entitled to <strong>FREE 1 Starlight</strong> (Quota #${cycle})`;
+  $('certDate').textContent=new Date().toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'});
+  $('certOverlay').classList.add('show');
+}
+function closeCert(){$('certOverlay').classList.remove('show');}
+function downloadCert(){
+  const el=$('certModal');
+  if(!el||typeof html2canvas==='undefined'){showToast('Certificate capture not available');return;}
+  const bar=$('certActions');if(bar)bar.style.visibility='hidden';
+  html2canvas(el,{scale:2,useCORS:true,backgroundColor:'#fdfcf8',logging:false}).then(canvas=>{
+    const a=document.createElement('a');
+    a.download='Starlight-Quota-Certificate-'+Date.now()+'.png';
+    a.href=canvas.toDataURL('image/png');
+    a.click();
+    showToast('Certificate downloaded 🏆');
+  }).catch(()=>showToast('Download failed')).finally(()=>{if(bar)bar.style.visibility='';});
+}
+
+/* ================= PRICE LIST: ADD / DELETE ================= */
+function addItem(){ state.items.push({name:'NEW ITEM',cost:0,price:0,base:0}); saveAll(false); renderPrices(); recalc(); showToast('Item added — i-edit ang name/price ✏'); }
+function delItem(i){
+  const it=state.items[i]; if(!it)return;
+  if(!confirm('Delete "'+it.name+'" sa price list?'))return;
+  state.items.splice(i,1); saveAll(false); renderPrices(); recalc(); showToast('"'+it.name+'" deleted 🗑');
+}
+
+/* ================= PRICE LIST POSTER (auto kasama promo/discount — bawat open/refresh ay fresh galing sa state) ================= */
+function buildPoster(){
+  const pr=state.promo;
+  const on=pr.on&&+pr.value>0;
+  const rows=state.items.map(it=>{
+    const np=promoPrice(it.price);
+    const disc=on&&np<it.price;
+    return `<div class="pp-row"><span class="pp-name">${esc(it.name)}</span><span class="pp-price">${disc?`<s>${money(it.price)}</s>`:''}<b class="${disc?'pp-promo':''}">${money(np)}</b></span></div>`;
+  }).join('');
+  const promoBanner=on?`<div class="poster-promo"><i class="fas fa-bullhorn"></i> PROMO: ${pr.type==='percent'?pr.value+'% OFF':'₱'+pr.value+' OFF'} — lahat ng price may discount na!</div>`:'';
+  $('posterCard').innerHTML=`
+    <div class="poster-head"><img src="adminlogo.png" alt="DGC" onerror="this.style.display='none'"><h2>Starlight Price List</h2><p>DGC eStore · ${new Date().toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'})}</p></div>
+    ${promoBanner}
+    <div class="poster-body">${rows}</div>
+    <div class="poster-foot">DGC eStore <i class="fas fa-star"></i> Starlight & Diamond Services<small>Prices subject to change · Message us to order</small></div>`;
+}
+function openPoster(){ buildPoster(); $('posterOverlay').classList.add('show'); }
+function refreshPoster(){ buildPoster(); showToast('Poster refreshed 🖼'); }
+function closePoster(){ $('posterOverlay').classList.remove('show'); }
+function downloadPoster(){
+  const el=$('posterCard');
+  if(!el||typeof html2canvas==='undefined'){showToast('Poster capture not available');return;}
+  const bar=$('posterActions'); if(bar)bar.style.visibility='hidden';
+  html2canvas(el,{scale:2,useCORS:true,backgroundColor:'#fff5fa',logging:false}).then(canvas=>{
+    const a=document.createElement('a');
+    a.download='DGC-Starlight-PriceList-'+todayStr()+'.png';
+    a.href=canvas.toDataURL('image/png');
+    a.click();
+    showToast('Poster downloaded 🖼');
+  }).catch(()=>showToast('Download failed')).finally(()=>{if(bar)bar.style.visibility='';});
+}
+
+/* ================= TOP STARLIGHT CUSTOMER CERTIFICATE ================= */
+function showTopCertificate(name,count){
+  $('certTitle').textContent='Top Starlight Customer';
+  $('certTag').textContent='DGC eStore · Most Starlight Purchases';
+  $('certName').textContent=name;
+  $('certSub').innerHTML=`For being the <strong>TOP Starlight customer</strong> with <strong>${count} NSL/Starlight purchase${count>1?'s':''}</strong> — maraming salamat sa patuloy na pagtangkilik! 👑`;
+  $('certDate').textContent=new Date().toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'});
+  $('certOverlay').classList.add('show');
+}
+
+/* ================= LONG-PRESS DRAG SCROLL (mobile/tablet) =================
+   Long-press sa table area (≈300ms) tapos i-drag = scroll pahilis/pahaba.
+   Normal na tap/scroll hindi apektado. */
+function initDragScroll(){
+  const el=document.querySelector('.tbl-wrap'); if(!el)return;
+  let active=false,startX=0,startY=0,startL=0,startT=0,timer=null;
+  el.addEventListener('touchstart',e=>{
+    if(e.touches.length!==1)return;
+    active=false; startX=e.touches[0].clientX; startY=e.touches[0].clientY;
+    startL=el.scrollLeft; startT=el.scrollTop;
+    clearTimeout(timer);
+    timer=setTimeout(()=>{active=true;el.classList.add('lp-drag');if(navigator.vibrate){try{navigator.vibrate(25);}catch(_){}}},300);
+  },{passive:true});
+  el.addEventListener('touchmove',e=>{
+    if(!active){
+      if(Math.abs(e.touches[0].clientX-startX)>12||Math.abs(e.touches[0].clientY-startY)>12)clearTimeout(timer);
+      return;
+    }
+    e.preventDefault();
+    el.scrollLeft=startL-(e.touches[0].clientX-startX);
+    el.scrollTop=startT-(e.touches[0].clientY-startY);
+  },{passive:false});
+  const end=()=>{clearTimeout(timer);active=false;el.classList.remove('lp-drag');};
+  el.addEventListener('touchend',end,{passive:true});
+  el.addEventListener('touchcancel',end,{passive:true});
+}
+
 /* INIT */
-renderPrices(); renderTable(); recalc();
+try{const mo=mottos[Math.floor(Math.random()*mottos.length)];document.getElementById('motto').innerHTML='<i class="'+mo[0]+'"></i> '+mo[1];}catch(_){}
+renderPrices(); renderTable(); recalc(); initDragScroll();
 if(fbReady()&&fbInit()) fbStart(); else syncBadge(false);
 if(fbDB) startStarlightOrderSync();
 setInterval(()=>{renderTable();renderCalendar()},60000);
