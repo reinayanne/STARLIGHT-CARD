@@ -3,6 +3,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -103,7 +104,26 @@ table.main td input[readonly]{background:#fdf2f7;font-weight:700;color:var(--pin
 td.custcell input{text-align:left !important;font-weight:800;min-width:150px}
 .date-in{cursor:pointer;min-width:86px}
 /* divider after every 3 customers */
-tr.divider td{background:linear-gradient(90deg,var(--pink-pale),var(--pink-light),var(--pink-pale)) !important;height:7px;padding:0;border-bottom:2px solid var(--pink-light)}
+tr.divider td{height:7px;padding:0}
+/* ===== FREEZE: # + Customer columns (default ON) ===== */
+table.main th.fz{width:38px;min-width:38px;position:sticky;left:0;top:0;z-index:14}
+table.main th.fz2{position:sticky;left:38px;top:0;z-index:13}
+table.main tbody tr:not(.month-head):not(.divider) td:nth-child(1){position:sticky;left:0;z-index:6;min-width:38px;max-width:38px;background:#fff}
+table.main tbody tr:not(.month-head):not(.divider) td:nth-child(2){position:sticky;left:38px;z-index:6;background:#fff;box-shadow:4px 0 8px -4px rgba(255,79,163,.35)}
+table.main tbody tr:not(.month-head):not(.divider):hover td:nth-child(1),table.main tbody tr:not(.month-head):not(.divider):hover td:nth-child(2){background:#fff5fa}
+table.main tbody tr.row-done td:nth-child(1),table.main tbody tr.row-done td:nth-child(2){background:#f1f1f1}
+/* ===== FREEZE OFF ===== */
+.tbl-wrap.no-freeze table.main th.fz,.tbl-wrap.no-freeze table.main th.fz2,
+.tbl-wrap.no-freeze table.main tbody tr td:nth-child(1),.tbl-wrap.no-freeze table.main tbody tr td:nth-child(2){position:static;left:auto;z-index:auto;box-shadow:none}
+.tbl-wrap.no-freeze table.main tbody tr td:nth-child(2){background:#fff}
+/* ===== VIEW MODE (edit locked) ===== */
+body.viewmode table.main td input:not([type=checkbox]):not(.gmail-in){pointer-events:none}
+body.viewmode table.main td input[type=checkbox]{pointer-events:none}
+body.viewmode table.main td select{pointer-events:none}
+body.viewmode .delrow,body.viewmode .mh-danger,body.viewmode .price-del,body.viewmode .chkall-btn{display:none}
+body.viewmode .mh-name{pointer-events:none}
+.copybtn{background:none;border:none;color:var(--teal);cursor:pointer;font-size:12px;transition:.2s;padding:3px}
+.copybtn:hover{color:#0d5d65;transform:scale(1.25)}
 /* account (= gifter IGN) cell */
 .acct{display:inline-block;font-weight:900;font-size:12.5px;cursor:pointer;padding:3px 6px;border-radius:8px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle}
 .acct:hover{background:#ffe4f0}
@@ -300,6 +320,7 @@ tr.drag-over td{box-shadow:inset 0 3px 0 var(--pink)}
 <base target="_blank">
 <base target="_blank">
 <base target="_blank">
+<base target="_blank">
 </head>
 <body>
 <audio id="coffeeAudio" loop><source src="coffee.mp3" type="audio/mpeg"></audio>
@@ -309,6 +330,8 @@ tr.drag-over td{box-shadow:inset 0 3px 0 var(--pink)}
     <button class="txtbtn" onclick="addRow()" title="Add row"><i class="fas fa-plus"></i> Add Row</button>
     <button class="txtbtn" onclick="exportExcel()" title="Export to Excel"><i class="fas fa-file-excel"></i> Excel</button>
     <button class="txtbtn" onclick="resetAll()" title="Reset all data" style="background:rgba(255,71,87,.35)"><i class="fas fa-trash"></i></button>
+    <button id="editBtn" class="txtbtn" onclick="toggleEditMode()" title="View mode — edits locked 🔒 (click to EDIT)"><i class="fas fa-pen"></i> <span style="font-size:9px;font-weight:900">EDIT</span></button>
+    <button id="freezeBtn" onclick="toggleFreeze()" title="Freeze ON ❄ — Customer column frozen (click to unfreeze)"><i class="fas fa-table-columns"></i></button>
     <button id="syncBtn" onclick="saveAll(true)" title="Sync status"><i class="fas fa-cloud"></i></button>
     <button onclick="saveAll(true)" title="Save (auto-saves too)"><i class="fas fa-save"></i></button>
     <button id="quotaBtn" onclick="openQuotaModal()" title="Starlight Quota — 13 orders = 1 FREE"><i class="fas fa-bullseye"></i><span class="qbadge" id="quotaBadge" style="display:none;">0</span></button>
@@ -377,8 +400,8 @@ tr.drag-over td{box-shadow:inset 0 3px 0 var(--pink)}
   <table class="main">
     <thead>
       <tr>
-        <th rowspan="2">#</th>
-        <th rowspan="2">Customer</th>
+        <th rowspan="2" class="fz">#</th>
+        <th rowspan="2" class="fz2">Customer</th>
         <th colspan="2" class="grp">Checklist</th>
         <th colspan="10" class="grp">Gifter <span style="font-weight:600">(3 customers = 1 account)</span></th>
         <th colspan="3" class="grp">Client</th>
@@ -408,7 +431,7 @@ tr.drag-over td{box-shadow:inset 0 3px 0 var(--pink)}
   <span><i class="dot" style="background:#d9f7e5;border:1px solid #0b6b3a"></i> Date today (green)</span>
   <span><i class="dot" style="background:#ffdde0;border:1px solid #a3122a"></i> Kahapon / overdue (red)</span>
   <span><i class="dot" style="background:#c8f7d8"></i> COMPLETED badge</span>
-  <span><i class="dot" style="background:linear-gradient(90deg,var(--pink-pale),var(--pink-light));width:26px"></i> Divider every 3 customers</span>
+  <span><i class="dot" style="background:linear-gradient(90deg,var(--pink-pale),var(--pink-light));width:26px"></i> Divider every 3 customers — color = account</span>
   <span><i class="fas fa-hand-pointer" style="color:var(--pink)"></i> Click IGN/account = copy</span>
   <span><i class="fas fa-grip-lines" style="color:var(--pink)"></i> Drag row = reorder</span>
   <span><i class="fas fa-envelope" style="color:var(--pink)"></i> Click Gmail = copy + ID + Server</span>
@@ -865,7 +888,7 @@ function rowHTML(r,m,i,merged){
     mergedCells=`
       <td class="numcell keepcell" rowspan="${sp}"><input type="number" style="min-width:52px" value="${g.nsl}" onchange="updGroupNSL(${m},'${ix}',this.value)" title="NSL para sa buong group (3 customers)"></td>
       <td class="numcell keepcell ${g.orders<0?'neg':''}" rowspan="${sp}" title="Orders = Followed − NSL (buong group)" style="font-size:14px">${g.orders}</td>
-      <td rowspan="${sp}" class="keepcell"><input type="text" style="min-width:170px" value="${esc(r.gGmail)}" placeholder="gifter@gmail.com" title="Click = copy Gmail + ID + Server 📋" onclick="copyGifter(${m},${i})" onchange="updGroupField(${m},'${ix}','gGmail',this.value)"></td>
+      <td rowspan="${sp}" class="keepcell"><input type="text" class="gmail-in" style="min-width:170px" value="${esc(r.gGmail)}" placeholder="gifter@gmail.com" title="Click = copy Gmail + ID + Server 📋" onclick="copyGifter(${m},${i})" onchange="updGroupField(${m},'${ix}','gGmail',this.value)"></td>
       <td class="keepcell" rowspan="${sp}" style="min-width:180px;background:#fffaf3;border-left:2px dashed var(--pink-pale);border-right:2px dashed var(--pink-pale)">
         <div class="acct-cell" title="Gifter account — click = copy 📋">
           <input type="text" class="acct-in" style="color:hsl(${hue},70%,42%)" value="${esc(r.gIGN)}" placeholder="Account..." title="EDITABLE — baguhin ang gifter account para sa buong group (3 rows)" onchange="updGroupField(${m},'${ix}','gIGN',this.value)">
@@ -893,7 +916,7 @@ function rowHTML(r,m,i,merged){
     <td class="numcell">${days===null?'—':days}</td>
     <td><button class="paypill pay-${r.payment}" onclick="cyclePay(${m},${i})">${r.payment}</button></td>
     ${doneCell}
-    <td class="keepcell"><button class="delrow" onclick="delRow(${m},${i})" title="Delete row"><i class="fas fa-trash"></i></button></td>
+    <td class="keepcell"><button class="copybtn" onclick="copyRowDetails(${m},${i})" title="Copy row details 📋"><i class="fas fa-copy"></i></button><button class="delrow" onclick="delRow(${m},${i})" title="Delete row"><i class="fas fa-trash"></i></button></td>
   </tr>`;
 }
 
@@ -961,7 +984,10 @@ function renderTable(){
         h+=rowHTML(r,m,idxs[k],k===0?{stats,span:grp.length,idxs:idxs.join(',')}:null);
       });
       /* divider after every 3 customers */
-      if(g+3<rows.length) h+='<tr class="divider"><td colspan="25"></td></tr>';
+      if(g+3<rows.length){
+        const dh=acctHue((grp[0].gIGN||'').trim()||'account');
+        h+='<tr class="divider"><td colspan="25" style="background:linear-gradient(90deg,hsl('+dh+',80%,82%),hsl('+((dh+50)%360)+',80%,66%),hsl('+dh+',80%,82%));border-bottom:2px solid hsl('+dh+',60%,55%)"></td></tr>';
+      }
     }
   });
   if(!h){
@@ -1326,8 +1352,62 @@ function initDragScroll(){
   el.addEventListener('touchcancel',end,{passive:true});
 }
 
+/* ================= EDIT / BACK MODE ================= */
+function toggleEditMode(){
+  state.editing=!state.editing;
+  document.body.classList.toggle('viewmode',!state.editing);
+  const b=$('editBtn');
+  if(b){
+    b.innerHTML=state.editing?'<i class="fas fa-arrow-left"></i> <span style="font-size:9px;font-weight:900">BACK</span>':'<i class="fas fa-pen"></i> <span style="font-size:9px;font-weight:900">EDIT</span>';
+    b.title=state.editing?'BACK — exit edit mode, lock edits 🔒':'EDIT — unlock editing ✏';
+  }
+  saveAll(false);
+  showToast(state.editing?'Edit mode ON ✏ — pwede nang mag-edit':'View mode 🔒 — naka-lock ang edits');
+}
+
+/* ================= FREEZE / UNFREEZE CUSTOMER COLUMN ================= */
+function toggleFreeze(){
+  const on=!(state.frozen!==false);
+  state.frozen=on;
+  document.querySelector('.tbl-wrap').classList.toggle('no-freeze',!on);
+  const b=$('freezeBtn');
+  if(b){
+    b.classList.toggle('sync-on',on);
+    b.title=on?'Freeze ON ❄ — Customer column frozen (click to unfreeze)':'Freeze OFF — click to freeze Customer column ❄';
+  }
+  saveAll(false);
+  showToast(on?'Customer column FROZEN ❄':'Column freeze OFF — scrolls freely');
+}
+
+/* ================= COPY ROW DETAILS ================= */
+function copyRowDetails(m,i){
+  const r=state.months[m].rows[i]; if(!r)return;
+  const d=datesOf(r);
+  const lines=[
+    '📋 STARLIGHT ORDER DETAILS',
+    'Customer: '+(r.customer||'—'),
+    'Gifter IGN/Account: '+(r.gIGN||'—'),
+    'Gifter Gmail: '+(r.gGmail||'—'),
+    'Gifter ID: '+(r.gID||'—')+(r.gServer?' · Server: '+r.gServer:''),
+    'Client IGN: '+(r.cIGN||'—'),
+    'Client MLID: '+(r.cMLID||'—')+(r.cMLServer?' · Server: '+r.cMLServer:''),
+    'NSL: '+(+r.giftNSL||0),
+    'Date Ordered: '+(fmtDate(r.ordered)||'—'),
+    'Expect (+8d): '+(fmtDate(d.expect)||'—'),
+    'Delivery (−1d): '+(fmtDate(d.delivery)||'—'),
+    'Payment: '+r.payment+(r.done?' · DONE ✓':'')
+  ];
+  navigator.clipboard.writeText(lines.join('\n')).then(()=>showToast('Row details copied 📋')).catch(()=>showToast('Copy failed'));
+}
+
 /* INIT */
 try{const mo=mottos[Math.floor(Math.random()*mottos.length)];document.getElementById('motto').innerHTML='<i class="'+mo[0]+'"></i> '+mo[1];}catch(_){}
+(function initEditFreeze(){
+  const fb=$('freezeBtn');
+  if(state.frozen===false){document.querySelector('.tbl-wrap').classList.add('no-freeze');if(fb)fb.title='Freeze OFF — click to freeze Customer column ❄';}
+  else if(fb)fb.classList.add('sync-on');
+  if(!state.editing){document.body.classList.add('viewmode');const eb=$('editBtn');if(eb)eb.title='View mode — edits locked 🔒 (click to EDIT)';}
+})();
 renderPrices(); renderTable(); recalc(); initDragScroll();
 if(fbReady()&&fbInit()) fbStart(); else syncBadge(false);
 if(fbDB) startStarlightOrderSync();
