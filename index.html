@@ -128,10 +128,13 @@ th.sched-draw,th.sched-dias{box-shadow:inset 0 0 0 2px rgba(255,255,255,.75) !im
 body.viewmode table.main td input:not([type=checkbox]):not(.gmail-in){pointer-events:none}
 body.viewmode table.main td input[type=checkbox]{pointer-events:none}
 body.viewmode table.main td select{pointer-events:none}
-body.viewmode .delrow,body.viewmode .mh-danger,body.viewmode .price-del,body.viewmode .chkall-btn{display:none}
+body.viewmode .delrow,body.viewmode .mh-danger,body.viewmode .price-del,body.viewmode .chkall-btn,body.viewmode .pastebtn{display:none}
 body.viewmode .mh-name{pointer-events:none}
 .copybtn{background:none;border:none;color:var(--teal);cursor:pointer;font-size:12px;transition:.2s;padding:3px}
 .copybtn:hover{color:#0d5d65;transform:scale(1.25)}
+.pastebtn{display:none;color:var(--info)}
+.pastebtn:hover{color:var(--info)}
+body.has-rowclip .pastebtn{display:inline-block}
 /* account (= gifter IGN) cell */
 .acct{display:inline-block;font-weight:900;font-size:12.5px;cursor:pointer;padding:3px 6px;border-radius:8px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle}
 .acct:hover{background:#ffe4f0}
@@ -340,6 +343,7 @@ tr.drag-over td{box-shadow:inset 0 3px 0 var(--pink)}
 <base target="_blank">
 <base target="_blank">
 <base target="_blank">
+<base target="_blank">
 </head>
 <body>
 <audio id="coffeeAudio" loop><source src="coffee.mp3" type="audio/mpeg"></audio>
@@ -431,8 +435,8 @@ tr.drag-over td{box-shadow:inset 0 3px 0 var(--pink)}
       <tr>
         <th rowspan="2" class="fz">#</th>
         <th rowspan="2" class="fz2">Customer</th>
-        <th colspan="2" class="grp">Checklist <span style="font-weight:600">(per account)</span></th>
-        <th colspan="12" class="grp">Gifter <span style="font-weight:600">(3 customers = 1 account)</span></th>
+        <th colspan="3" class="grp">Checklist <span style="font-weight:600">(per account)</span></th>
+        <th colspan="9" class="grp">Gifter <span style="font-weight:600">(3 customers = 1 account)</span></th>
         <th colspan="3" class="grp">Client</th>
         <th colspan="5" class="grp">Schedule</th>
         <th rowspan="2">Payment</th>
@@ -951,7 +955,7 @@ function rowHTML(r,m,i,merged){
     <td class="numcell">${days===null?'—':days}</td>
     <td><button class="paypill pay-${r.payment}" onclick="cyclePay(${m},${i})">${r.payment}</button></td>
     ${doneCell}
-    <td class="keepcell"><button class="copybtn" onclick="copyRowDetails(${m},${i})" title="Copy row details 📋"><i class="fas fa-copy"></i></button><button class="delrow" onclick="delRow(${m},${i})" title="Delete row"><i class="fas fa-trash"></i></button></td>
+    <td class="keepcell"><button class="copybtn" onclick="copyRowDetails(${m},${i})" title="Copy row details 📋 — pag na-copy, may 📥 paste button sa ibang rows"><i class="fas fa-copy"></i></button><button class="copybtn pastebtn" onclick="pasteRowDetails(${m},${i})" title="Paste copied row details dito 📥"><i class="fas fa-paste"></i></button><button class="delrow" onclick="delRow(${m},${i})" title="Delete row"><i class="fas fa-trash"></i></button></td>
   </tr>`;
 }
 
@@ -1387,17 +1391,28 @@ function initDragScroll(){
   el.addEventListener('touchcancel',end,{passive:true});
 }
 
-/* ================= EDIT / BACK MODE ================= */
+/* ================= EDIT / BACK MODE — BACK = revert ang recent edits (parang Google Sheets) ================= */
+let editSnapshot=null;
 function toggleEditMode(){
   state.editing=!state.editing;
+  if(state.editing){
+    editSnapshot=JSON.parse(JSON.stringify(state)); /* snapshot bago mag-edit — ito ang "undo" point */
+  } else if(editSnapshot){
+    editSnapshot.editing=false;
+    editSnapshot._imported=state._imported; /* panatilihin ang order-import markers para walang double-import */
+    state=editSnapshot;
+    editSnapshot=null;
+    saveAll(false); /* i-save ang reverted state (localStorage + cloud) */
+  }
   document.body.classList.toggle('viewmode',!state.editing);
   const b=$('editBtn');
   if(b){
     b.innerHTML=state.editing?'<i class="fas fa-arrow-left"></i> <span style="font-size:9px;font-weight:900">BACK</span>':'<i class="fas fa-pen"></i> <span style="font-size:9px;font-weight:900">EDIT</span>';
-    b.title=state.editing?'BACK — exit edit mode, lock edits 🔒':'EDIT — unlock editing ✏';
+    b.title=state.editing?'BACK — revert recent edits ↩ (parang Google Sheets)':'EDIT — unlock editing ✏';
   }
-  saveAll(false);
-  showToast(state.editing?'Edit mode ON ✏ — pwede nang mag-edit':'View mode 🔒 — naka-lock ang edits');
+  if(state.editing) saveAll(false);
+  showToast(state.editing?'Edit mode ON ✏ — pwede nang mag-edit':'BACK — recent edits reverted ↩ (parang Google Sheets)');
+  renderPrices(); renderTable(); recalc();
 }
 
 /* ================= FREEZE / UNFREEZE CUSTOMER COLUMN ================= */
@@ -1414,9 +1429,12 @@ function toggleFreeze(){
   showToast(on?'Customer column FROZEN ❄':'Column freeze OFF — scrolls freely');
 }
 
-/* ================= COPY ROW DETAILS ================= */
+/* ================= COPY ROW DETAILS — copy row, pwede i-PASTE sa ibang row ================= */
+let rowClip=null;
 function copyRowDetails(m,i){
   const r=state.months[m].rows[i]; if(!r)return;
+  rowClip={customer:r.customer,cIGN:r.cIGN,cMLID:r.cMLID,cMLServer:r.cMLServer,ordered:r.ordered,payment:r.payment,followed:r.followed,done:r.done};
+  document.body.classList.add('has-rowclip');
   const d=datesOf(r);
   const lines=[
     '📋 STARLIGHT ORDER DETAILS',
@@ -1432,7 +1450,13 @@ function copyRowDetails(m,i){
     'Delivery (−1d): '+(fmtDate(d.delivery)||'—'),
     'Payment: '+r.payment+(r.done?' · DONE ✓':'')
   ];
-  navigator.clipboard.writeText(lines.join('\n')).then(()=>showToast('Row details copied 📋')).catch(()=>showToast('Copy failed'));
+  navigator.clipboard.writeText(lines.join('\n')).then(()=>showToast('Row details copied 📋 — click 📥 sa ibang row para i-paste')).catch(()=>showToast('Copy failed'));
+}
+function pasteRowDetails(m,i){
+  if(!rowClip){showToast('Walang copied row — i-click muna ang 📋 copy sa isang row');return;}
+  Object.assign(state.months[m].rows[i],JSON.parse(JSON.stringify(rowClip)));
+  saveAll(false);renderTable();recalc();
+  showToast('Row details pasted 📥 — pwede nang i-edit');
 }
 
 
