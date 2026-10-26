@@ -4,6 +4,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -105,16 +106,23 @@ td.custcell input{text-align:left !important;font-weight:800;min-width:150px}
 .date-in{cursor:pointer;min-width:86px}
 /* divider after every 3 customers */
 tr.divider td{height:7px;padding:0}
-/* ===== FREEZE: # + Customer columns (default ON) ===== */
+/* ===== FREEZE: # + Customer + Gmail columns (default ON) ===== */
 table.main th.fz{width:38px;min-width:38px;position:sticky;left:0;top:0;z-index:14}
-table.main th.fz2{position:sticky;left:38px;top:0;z-index:13}
+table.main th.fz2{position:sticky;left:38px;top:0;z-index:13;width:190px;min-width:190px}
+table.main th.fz3{position:sticky;left:228px;top:0;z-index:13;width:210px;min-width:210px}
 table.main tbody tr:not(.month-head):not(.divider) td:nth-child(1){position:sticky;left:0;z-index:6;min-width:38px;max-width:38px;background:#fff}
-table.main tbody tr:not(.month-head):not(.divider) td:nth-child(2){position:sticky;left:38px;z-index:6;background:#fff;box-shadow:4px 0 8px -4px rgba(255,79,163,.35)}
+table.main tbody tr:not(.month-head):not(.divider) td:nth-child(2){position:sticky;left:38px;z-index:6;background:#fff;box-shadow:4px 0 8px -4px rgba(255,79,163,.35);width:190px;min-width:190px}
+table.main td.fz3{position:sticky;left:228px;z-index:6;background:#fff;box-shadow:4px 0 8px -4px rgba(255,79,163,.35);width:210px;min-width:210px}
 table.main tbody tr:not(.month-head):not(.divider):hover td:nth-child(1),table.main tbody tr:not(.month-head):not(.divider):hover td:nth-child(2){background:#fff5fa}
-table.main tbody tr.row-done td:nth-child(1),table.main tbody tr.row-done td:nth-child(2){background:#f1f1f1}
+table.main tbody tr:not(.month-head):not(.divider):hover td.fz3{background:#fff5fa}
+table.main tbody tr.row-done td:nth-child(1),table.main tbody tr.row-done td:nth-child(2),table.main tbody tr.row-done td.fz3{background:#f1f1f1}
+/* ===== ROUTINE highlight: draw day = green, diamonds-input day = violet ===== */
+.sched-draw{background:#d9f7e5 !important;box-shadow:inset 0 0 0 2px var(--success)}
+.sched-dias{background:#efe6ff !important;box-shadow:inset 0 0 0 2px var(--purple)}
+th.sched-draw,th.sched-dias{box-shadow:inset 0 0 0 2px rgba(255,255,255,.75) !important}
 /* ===== FREEZE OFF ===== */
-.tbl-wrap.no-freeze table.main th.fz,.tbl-wrap.no-freeze table.main th.fz2,
-.tbl-wrap.no-freeze table.main tbody tr td:nth-child(1),.tbl-wrap.no-freeze table.main tbody tr td:nth-child(2){position:static;left:auto;z-index:auto;box-shadow:none}
+.tbl-wrap.no-freeze table.main th.fz,.tbl-wrap.no-freeze table.main th.fz2,.tbl-wrap.no-freeze table.main th.fz3,
+.tbl-wrap.no-freeze table.main tbody tr td:nth-child(1),.tbl-wrap.no-freeze table.main tbody tr td:nth-child(2),.tbl-wrap.no-freeze table.main tbody tr td.fz3{position:static;left:auto;z-index:auto;box-shadow:none;width:auto;min-width:auto}
 .tbl-wrap.no-freeze table.main tbody tr td:nth-child(2){background:#fff}
 /* ===== VIEW MODE (edit locked) ===== */
 body.viewmode table.main td input:not([type=checkbox]):not(.gmail-in){pointer-events:none}
@@ -283,6 +291,16 @@ tr.drag-over td{box-shadow:inset 0 3px 0 var(--pink)}
 .cp-d.sel{background:var(--pink);color:#fff;font-weight:900}
 .cp-foot{display:flex;justify-content:space-between;margin-top:10px}
 .cp-foot button{width:auto;padding:5px 14px;font-size:11px;font-weight:800;border:none;border-radius:10px;cursor:pointer;background:linear-gradient(135deg,var(--pink),var(--pink-light));color:#fff}
+
+/* ===== WEEKLY ROUTINE BAR ===== */
+.routine-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:linear-gradient(135deg,#efe6ff,#f8f4ff);border:2px solid var(--purple);border-radius:20px;padding:12px 18px;margin-bottom:16px;box-shadow:0 6px 22px rgba(139,92,246,.2)}
+.routine-bar .tag{background:var(--purple);color:#fff;padding:6px 16px;border-radius:20px;font-weight:900;font-size:13px;letter-spacing:1px;display:flex;align-items:center;gap:8px}
+.routine-bar label{font-size:12px;font-weight:800;color:#5b3ba8}
+.routine-bar select{padding:8px 12px;border-radius:10px;border:2px solid rgba(139,92,246,.45);font-size:13px;color:#5b3ba8;background:#fff;outline:none;font-family:inherit}
+.routine-bar .rnote{font-size:12.5px;color:#5b3ba8;font-weight:700}
+.routine-bar .rnote b{color:var(--purple)}
+.routine-now{animation:rPulse 1.6s infinite}
+@keyframes rPulse{0%,100%{box-shadow:0 0 0 0 rgba(139,92,246,.4)}50%{box-shadow:0 0 16px 5px rgba(139,92,246,.28)}}
 /* ===== PRICE LIST: add/delete buttons ===== */
 .price-del{background:none;border:none;color:#ffb3cd;cursor:pointer;font-size:12px;transition:.2s;padding:2px 4px}
 .price-del:hover{color:var(--danger);transform:scale(1.25)}
@@ -310,6 +328,7 @@ tr.drag-over td{box-shadow:inset 0 3px 0 var(--pink)}
 /* ===== QUOTA TOP CUSTOMER ===== */
 .quota-top{display:flex;justify-content:space-between;align-items:center;gap:10px;background:linear-gradient(135deg,#fff8e1,#fffdf2);border:2px solid var(--gold);border-radius:16px;padding:14px 16px;margin-bottom:14px;flex-wrap:wrap;box-shadow:0 6px 20px rgba(212,175,55,.25)}
 </style>
+<base target="_blank">
 <base target="_blank">
 <base target="_blank">
 <base target="_blank">
@@ -385,6 +404,16 @@ tr.drag-over td{box-shadow:inset 0 3px 0 var(--pink)}
   <span class="promo-note" id="promoNote"></span>
 </div>
 
+<!-- WEEKLY ROUTINE BAR -->
+<div class="routine-bar" id="routineBar">
+  <div class="tag"><i class="fas fa-calendar-check"></i> ROUTINE</div>
+  <label>🎨 Draw every</label>
+  <select id="schedDraw" onchange="updSchedule('drawDay',this.value)"></select>
+  <label>💎 Diamonds input every</label>
+  <select id="schedDias" onchange="updSchedule('diasDay',this.value)"></select>
+  <span class="rnote" id="routineNote"></span>
+</div>
+
 <!-- SUMMARY CHIPS -->
 <div class="summary-chips" id="chips"></div>
 
@@ -402,8 +431,8 @@ tr.drag-over td{box-shadow:inset 0 3px 0 var(--pink)}
       <tr>
         <th rowspan="2" class="fz">#</th>
         <th rowspan="2" class="fz2">Customer</th>
-        <th colspan="2" class="grp">Checklist</th>
-        <th colspan="10" class="grp">Gifter <span style="font-weight:600">(3 customers = 1 account)</span></th>
+        <th colspan="2" class="grp">Checklist <span style="font-weight:600">(per account)</span></th>
+        <th colspan="12" class="grp">Gifter <span style="font-weight:600">(3 customers = 1 account)</span></th>
         <th colspan="3" class="grp">Client</th>
         <th colspan="5" class="grp">Schedule</th>
         <th rowspan="2">Payment</th>
@@ -411,10 +440,11 @@ tr.drag-over td{box-shadow:inset 0 3px 0 var(--pink)}
         <th rowspan="2"></th>
       </tr>
       <tr>
-        <th class="grp">Draw <button class="chkall-btn" onclick="toggleCheckAll('draw')" title="Tap: uncheck all · tap ulit: check all"><i class="fas fa-check-double"></i></button></th><th class="grp">Collect <button class="chkall-btn" onclick="toggleCheckAll('collect')" title="Tap: uncheck all · tap ulit: check all"><i class="fas fa-check-double"></i></button></th>
+        <th class="grp fz3" id="thGmail" title="NAKA-FREEZE — kadikit sa Customer column ❄">Gmail <i class="fas fa-thumbtack" style="font-size:9px"></i></th>
+        <th class="grp" id="thDraw">Draw <button class="chkall-btn" onclick="toggleCheckAll('draw')" title="Tap: uncheck all · tap ulit: check all"><i class="fas fa-check-double"></i></button></th><th class="grp" id="thCollect">Collect <button class="chkall-btn" onclick="toggleCheckAll('collect')" title="Tap: uncheck all · tap ulit: check all"><i class="fas fa-check-double"></i></button></th>
         <th class="grp">🎁<br>NSL</th><th class="grp">Orders<br><span style="font-weight:600">(Followed−NSL)</span></th>
-        <th class="grp">Gmail</th><th class="grp">IGN / Account</th><th class="grp">ID</th><th class="grp">Server</th>
-        <th class="grp">Start<br>💎</th><th class="grp">WDP<br>Days</th><th class="grp">TODAY<br>💎</th><th class="grp">WDP Need<br><span style="font-weight:600">(Days÷7−9)</span></th>
+        <th class="grp">IGN / Account</th><th class="grp">ID</th><th class="grp">Server</th>
+        <th class="grp" id="thStart">Start<br>💎</th><th class="grp" id="thWdpDays">WDP<br>Days</th><th class="grp">TODAY<br>💎</th><th class="grp">WDP Need<br><span style="font-weight:600">(Days÷7−9)</span></th>
         <th class="grp">IGN</th><th class="grp">MLID</th><th class="grp">ML Server</th>
         <th class="grp">Followed ✓</th><th class="grp">Date Ordered</th><th class="grp">Expect<br>(+8d)</th><th class="grp">Delivery<br>(−1d)</th><th class="grp">Days</th>
       </tr>
@@ -425,7 +455,7 @@ tr.drag-over td{box-shadow:inset 0 3px 0 var(--pink)}
 <div class="addbar">
   <button class="btn btn-p" onclick="addRow()"><i class="fas fa-plus"></i> Add Row</button>
   <button class="btn btn-t" onclick="exportExcel()"><i class="fas fa-file-excel"></i> Export to Excel</button>
-  <span style="font-size:12px;color:var(--pink-light)"><i class="fas fa-info-circle"></i> Auto-saves sa browser. Click Date Ordered = calendar popup — TAP LANG para pumili ng date 🗓 (naka-word format pa rin, e.g. DEC 21). Delivery today = green, kahapon/overdue = red. Done = COMPLETED badge. 📱 Long-press + drag = i-scroll ang table pahilis/pahaba.</span>
+  <span style="font-size:12px;color:var(--pink-light)"><i class="fas fa-info-circle"></i> Auto-saves sa browser. Click Date Ordered = calendar popup 🗓. Draw/Collect = PER ACCOUNT (3 customers = 1 check) ✅. Gmail column = NAKA-FREEZE ❄ kadikit sa Customer — DOUBLE CLICK = copy Gmail + auto-check Collect ✓. Delivery today = green, overdue = red. 📱 Long-press + drag = scroll ang table.</span>
 </div>
 <div class="legend">
   <span><i class="dot" style="background:#d9f7e5;border:1px solid #0b6b3a"></i> Date today (green)</span>
@@ -558,6 +588,7 @@ function defaultState(){
       {name:'3X PSL',cost:1125,price:1299,base:0},
     ],
     promo:{on:false,type:'percent',value:10},
+    schedule:{drawDay:1,diasDay:4},
     wdp:{owned:0},
     months:[{name:currentMonthName(),collapsed:false,rows:seedRows()}]
   };
@@ -576,6 +607,7 @@ function migrate(st){
   }
   delete st.rows;
   st.quotaClaims=st.quotaClaims||{};
+  st.schedule=st.schedule||{drawDay:1,diasDay:4};
   /* FIX: normalize Date Ordered -> ISO (old saved "DEC 21" values broke the calendar) */
   st.months.forEach(mo=>(mo.rows||[]).forEach(r=>{ if(r.ordered){ r.ordered=parseDateInput(r.ordered); } }));
   return st;
@@ -796,7 +828,7 @@ function recalc(){
     <div class="chip"><i class="fas fa-gem" style="color:var(--purple)"></i> WDP need <b>${c.wdpNeed}</b></div>
     <div class="chip"><i class="fas fa-money-bill-wave" style="color:var(--success)"></i> Paid <b>${c.paid}</b></div>
     <div class="chip"><i class="fas fa-exclamation-circle" style="color:var(--danger)"></i> Unpaid <b>${c.unpaid}</b></div>`;
-  renderCalendar(); renderAccounts(); renderQuotaBadge();
+  renderCalendar(); renderAccounts(); renderQuotaBadge(); renderRoutine();
 }
 
 /* ================= CALENDAR (top card) ================= */
@@ -881,14 +913,18 @@ function rowHTML(r,m,i,merged){
     ?`<td class="keepcell" style="background:#e8f9f0 !important"><span class="completed-pill" onclick="updRow(${m},${i},'done',false)" title="Click to undo">COMPLETED ✓</span></td>`
     :chk('done');
 
-  /* merged gifter cells (rowspan) — lilitaw lang sa first row ng group */
+  /* merged cells (rowspan) — lilitaw lang sa first row ng group.
+     Gmail = NAKA-FREEZE (kadikit sa Customer ❄) · Draw/Collect = PER ACCOUNT · Start💎/WDP Days = highlight sa routine day */
   let mergedCells='';
   if(merged){
     const g=merged.stats, sp=merged.span, ix=merged.idxs;
+    const drawCls=isDrawDay()?'sched-draw':'', diasCls=isDiasDay()?'sched-dias':'';
+    const grpChk=(f)=>`<td class="keepcell ${f==='draw'?drawCls:''}" rowspan="${sp}" style="text-align:center"><input type="checkbox" ${r[f]?'checked':''} onchange="updGroupField(${m},'${ix}','${f}',this.checked)" title="${f==='draw'?'Draw':'Collect'} — PER ACCOUNT (3 customers = 1 check)"></td>`;
     mergedCells=`
+      <td class="keepcell fz3" rowspan="${sp}" title="NAKA-FREEZE ❄ kadikit sa Customer · SINGLE click = i-edit · DOUBLE click = copy Gmail + auto-check Collect ✓"><input type="text" class="gmail-in" style="min-width:180px" value="${esc(r.gGmail)}" placeholder="gifter@gmail.com" ondblclick="gmailDbl(${m},${i})" onchange="updGroupField(${m},'${ix}','gGmail',this.value)"></td>
+      ${grpChk('draw')}${grpChk('collect')}
       <td class="numcell keepcell" rowspan="${sp}"><input type="number" style="min-width:52px" value="${g.nsl}" onchange="updGroupNSL(${m},'${ix}',this.value)" title="NSL para sa buong group (3 customers)"></td>
       <td class="numcell keepcell ${g.orders<0?'neg':''}" rowspan="${sp}" title="Orders = Followed − NSL (buong group)" style="font-size:14px">${g.orders}</td>
-      <td rowspan="${sp}" class="keepcell"><input type="text" class="gmail-in" style="min-width:170px" value="${esc(r.gGmail)}" placeholder="gifter@gmail.com" title="Click = copy Gmail + ID + Server 📋" onclick="copyGifter(${m},${i})" onchange="updGroupField(${m},'${ix}','gGmail',this.value)"></td>
       <td class="keepcell" rowspan="${sp}" style="min-width:180px;background:#fffaf3;border-left:2px dashed var(--pink-pale);border-right:2px dashed var(--pink-pale)">
         <div class="acct-cell" title="Gifter account — click = copy 📋">
           <input type="text" class="acct-in" style="color:hsl(${hue},70%,42%)" value="${esc(r.gIGN)}" placeholder="Account..." title="EDITABLE — baguhin ang gifter account para sa buong group (3 rows)" onchange="updGroupField(${m},'${ix}','gIGN',this.value)">
@@ -897,8 +933,8 @@ function rowHTML(r,m,i,merged){
       </td>
       <td rowspan="${sp}" class="keepcell"><input type="text" style="min-width:60px" value="${esc(r.gID)}" placeholder="ID" onchange="updGroupField(${m},'${ix}','gID',this.value)"></td>
       <td rowspan="${sp}" class="keepcell"><input type="text" style="min-width:70px" value="${esc(r.gServer)}" placeholder="Server" onchange="updGroupField(${m},'${ix}','gServer',this.value)"></td>
-      <td class="keepcell" rowspan="${sp}" title="Start Diamonds — editable"><input type="number" style="min-width:74px;font-weight:900;color:var(--purple);text-align:center" value="${g.curDias}" onchange="updGroupField(${m},'${ix}','curDias',this.value)"></td>
-      <td class="keepcell" rowspan="${sp}" title="WDP Days — editable (ilang araw nang naka-WDP)"><input type="number" style="min-width:60px;font-weight:900;color:var(--info);text-align:center" value="${g.wdpDays}" onchange="updGroupField(${m},'${ix}','gWdpDays',this.value)"></td>
+      <td class="keepcell ${diasCls}" rowspan="${sp}" title="Start Diamonds — editable${isDiasDay()?' · 💎 ROUTINE DAY — i-update ngayon!':''}"><input type="number" style="min-width:74px;font-weight:900;color:var(--purple);text-align:center" value="${g.curDias}" onchange="updGroupField(${m},'${ix}','curDias',this.value)"></td>
+      <td class="keepcell ${diasCls}" rowspan="${sp}" title="WDP Days — editable (ilang araw nang naka-WDP)${isDiasDay()?' · 💎 ROUTINE DAY — i-update ngayon!':''}"><input type="number" style="min-width:60px;font-weight:900;color:var(--info);text-align:center" value="${g.wdpDays}" onchange="updGroupField(${m},'${ix}','gWdpDays',this.value)"></td>
       <td class="keepcell" rowspan="${sp}" style="font-weight:900;color:var(--purple);font-size:13px" title="TODAY 💎 = Start 💎 + (WDP Days × 20)">${g.todayDias}</td>
       <td class="keepcell" rowspan="${sp}" style="font-weight:900;color:var(--teal);font-size:13px" title="WDP Need = WDP Days ÷ 7 − 9">${g.wdpNeed}</td>`;
   }
@@ -906,7 +942,6 @@ function rowHTML(r,m,i,merged){
   return `<tr class="${trCls}" draggable="true" ondragstart="dragStart(event,${m},${i})" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="dropRow(event,${m},${i});this.classList.remove('drag-over')" title="Drag to reorder 📦">
     <td style="font-weight:900;color:var(--pink)">${r.n}</td>
     <td class="custcell"><input type="text" value="${esc(r.customer)}" placeholder="Customer name..." onchange="updRow(${m},${i},'customer',this.value)"></td>
-    ${chk('draw')}${chk('collect')}
     ${mergedCells}
     ${cell('cIGN','Client IGN','text','min-width:120px')}${cell('cMLID','MLID','text','min-width:80px')}${cell('cMLServer','Server','text','min-width:70px')}
     ${chk('followed')}
@@ -1400,6 +1435,47 @@ function copyRowDetails(m,i){
   navigator.clipboard.writeText(lines.join('\n')).then(()=>showToast('Row details copied 📋')).catch(()=>showToast('Copy failed'));
 }
 
+
+/* ================= GMAIL: DOUBLE CLICK = copy Gmail lang + auto-check Collect ✓ (per account) ================= */
+function gmailDbl(m,i){
+  const rows=state.months[m].rows, r=rows[i]; if(!r)return;
+  if(!r.gGmail){ showToast('Walang Gmail pa 📝'); return; }
+  copyText(r.gGmail);
+  if(!r.collect){
+    const ix=[]; for(let k=0;k<3;k++){ const rr=rows[i+k]; if(!rr) break; ix.push(i+k); if(rr.gIGN!==r.gIGN) break; }
+    ix.forEach(x=>{rows[x].collect=true});
+    saveAll(false); renderTable(); recalc();
+    showToast('Gmail copied 📧 + Collect ✓ auto-checked (per account)');
+  }
+}
+
+/* ================= WEEKLY ROUTINE — Draw day / Diamonds-input day (auto-highlight + reminder) =================
+   state.schedule = {drawDay:0-6, diasDay:0-6} (0=Sunday). Kapag DRAW DAY: Draw column naka-绿色 highlight +
+   reminder sa routine bar. Kapag DIAMONDS DAY: Start💎/WDP Days/Gmail columns naka-violet highlight —
+   yun ang "freeze" na task ngayong araw, kadikit ang email para isang tingin lang. */
+const WEEKDAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+function isDrawDay(){ try{return new Date().getDay()===(+state.schedule.drawDay)}catch(e){return false} }
+function isDiasDay(){ try{return new Date().getDay()===(+state.schedule.diasDay)}catch(e){return false} }
+function updSchedule(f,v){ state.schedule[f]=parseInt(v,10); saveAll(false); renderRoutine(); renderTable(); showToast('Routine updated 📅'); }
+function renderRoutine(){
+  const s=state.schedule; if(!s) return;
+  const sd=$('schedDraw'), dd=$('schedDias');
+  if(sd) sd.innerHTML=WEEKDAYS.map((d,i)=>`<option value="${i}" ${+s.drawDay===i?'selected':''}>${d}</option>`).join('');
+  if(dd) dd.innerHTML=WEEKDAYS.map((d,i)=>`<option value="${i}" ${+s.diasDay===i?'selected':''}>${d}</option>`).join('');
+  const td=new Date().getDay(), draw=+s.drawDay===td, dias=+s.diasDay===td;
+  [['thDraw',draw],['thCollect',draw],['thStart',dias],['thWdpDays',dias],['thGmail',dias]].forEach(([id,on])=>{
+    const el=$(id); if(el) el.classList.toggle(on?'sched-draw':'sched-dias',false)||el.classList.remove('sched-draw','sched-dias');
+    if(el&&on) el.classList.add(draw&&['thDraw','thCollect'].includes(id)?'sched-draw':'sched-dias');
+  });
+  const bar=$('routineBar'); if(bar) bar.classList.toggle('routine-now',draw||dias);
+  const note=$('routineNote'); if(note){
+    note.innerHTML = draw&&dias ? '<b>📅 TODAY: DRAW + DIAMONDS INPUT DAY!</b> 🎨 I-check ang Draw · 💎 I-update ang Start 💎 / WDP Days'
+      : draw ? '<b>📅 TODAY IS DRAW DAY 🎨</b> — i-check ang Draw checklist (per account), kadikit ang Gmail 📧'
+      : dias ? '<b>📅 TODAY IS DIAMONDS INPUT DAY 💎</b> — i-update ang Start 💎 / WDP Days ng mga account'
+      : 'Next routine — Draw: <b>'+WEEKDAYS[s.drawDay]+'</b> · Diamonds input: <b>'+WEEKDAYS[s.diasDay]+'</b> 🗓';
+  }
+}
+
 /* INIT */
 try{const mo=mottos[Math.floor(Math.random()*mottos.length)];document.getElementById('motto').innerHTML='<i class="'+mo[0]+'"></i> '+mo[1];}catch(_){}
 (function initEditFreeze(){
@@ -1414,4 +1490,4 @@ if(fbDB) startStarlightOrderSync();
 setInterval(()=>{renderTable();renderCalendar()},60000);
 </script>
 </body>
-</html>"
+</html>
